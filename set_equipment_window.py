@@ -58,6 +58,7 @@ class Ui_MainWindow(object):
         self.save_equip_button.setFont(font)
         self.save_equip_button.setStyleSheet("#save_equip_button{\n"
 "    background-color: rgb(24, 148, 2);\n"
+"    border-radius: 10px;\n"
 "}")
         self.save_equip_button.setObjectName("save_equip_button")
         self.gridLayout.addWidget(self.save_equip_button, 3, 1, 1, 1)
@@ -79,6 +80,7 @@ class Ui_MainWindow(object):
         self.del_equip_button.setFont(font)
         self.del_equip_button.setStyleSheet("#del_equip_button{\n"
 "    background-color: rgba(255, 0, 0, 0.9);\n"
+"    border-radius: 10px;\n"
 "}")
         self.del_equip_button.setObjectName("del_equip_button")
         self.gridLayout.addWidget(self.del_equip_button, 4, 1, 1, 1)
@@ -88,8 +90,18 @@ class Ui_MainWindow(object):
 "    background-color: transparent;\n"
 "    border: 1px solid gray;\n"
 " color: white;\n"
+"}"
+"QListView {\n"
+"    background-color: rgb(41, 85, 180);\n"
+    "color: white;\n"
+"}"
+"QListView::item:selected {\n"
+"    background-color: #131936;\n"
+    "color: white;\n"
 "}")
         self.set_category_equip.setObjectName("set_category_equip")
+        self.set_category_equip.addItems(['Компьютеры', 'Консоли', 'VR', 'Периферия', 'Другое'])
+        self.set_category_equip.setCurrentIndex(-1)
         self.gridLayout.addWidget(self.set_category_equip, 0, 0, 1, 2)
         MainWindow.setCentralWidget(self.centralwidget)
 

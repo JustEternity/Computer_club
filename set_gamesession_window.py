@@ -32,12 +32,20 @@ class Ui_MainWindow(object):
 "    background-color: transparent;\n"
 "    border: 1px solid gray;\n"
 "    color: white;\n"
-"}")
+"}"
+"QListView {\n"
+"    background-color: rgb(41, 85, 180);\n"
+    "color: white;\n"
+"}"
+"QListView::item:selected {\n"
+"    background-color: #131936;\n"
+    "color: white;\n"
+"}"
+)
         self.set_client.setEditable(False)
         self.set_client.setCurrentText("")
         self.set_client.setObjectName("set_client")
-        self.set_client.addItem("")
-        self.set_client.addItem("")
+        self.set_client.setCurrentIndex(-1)
         self.gridLayout_2.addWidget(self.set_client, 0, 0, 1, 1)
         self.set_equipment = QtWidgets.QComboBox(parent=self.centralwidget)
         font = QtGui.QFont()
@@ -48,7 +56,16 @@ class Ui_MainWindow(object):
 "    background-color: transparent;\n"
 "    border: 1px solid gray;\n"
 "    color: white;\n"
+"}"
+"QListView {\n"
+"    background-color: rgb(41, 85, 180);\n"
+    "color: white;\n"
+"}"
+"QListView::item:selected {\n"
+"    background-color: #131936;\n"
+    "color: white;\n"
 "}")
+        self.set_equipment.setCurrentIndex(-1)
         self.set_equipment.setObjectName("set_equipment")
         self.gridLayout_2.addWidget(self.set_equipment, 1, 0, 1, 1)
         self.equipment_info = QtWidgets.QTextBrowser(parent=self.centralwidget)
@@ -89,6 +106,7 @@ class Ui_MainWindow(object):
         self.stop_session_button.setFont(font)
         self.stop_session_button.setStyleSheet("#stop_session_button{\n"
 "    background-color: rgba(255, 0, 0, 0.9);\n"
+"    border-radius: 10px;\n"
 "}")
         self.stop_session_button.setObjectName("stop_session_button")
         self.gridLayout.addWidget(self.stop_session_button, 1, 2, 1, 1)
@@ -99,6 +117,7 @@ class Ui_MainWindow(object):
         font.setFamily("Bahnschrift SemiLight SemiConde")
         font.setPointSize(14)
         self.price_session.setFont(font)
+        self.price_session.setReadOnly(True)
         self.price_session.setStyleSheet("#price_session{\n"
 "    background-color: transparent;\n"
 "    border: 1px solid gray;\n"
@@ -115,6 +134,7 @@ class Ui_MainWindow(object):
         self.save_session_button.setFont(font)
         self.save_session_button.setStyleSheet("#save_session_button{\n"
 "    background-color: rgb(24, 148, 2);\n"
+"    border-radius: 10px;\n"
 "}")
         self.save_session_button.setObjectName("save_session_button")
         self.gridLayout.addWidget(self.save_session_button, 0, 2, 1, 1)

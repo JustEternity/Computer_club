@@ -85,7 +85,8 @@ class Ui_MainWindow(object):
         self.create_session_button.setFont(font)
         self.create_session_button.setStyleSheet("#create_session_button{\n"
 "    background-color: rgb(92, 17, 255);\n"
-"color: white;\n"
+"    color: white;\n"
+"    border-radius: 10px;\n"
 "}")
         self.create_session_button.setObjectName("create_session_button")
         self.button_sessions_layout.addWidget(self.create_session_button)
@@ -98,7 +99,16 @@ class Ui_MainWindow(object):
         self.select_hall.setFont(font)
         self.select_hall.setStyleSheet("#select_hall{\n"
 "    background-color: rgb(92, 17, 255);\n"
-"color: white;\n"
+"    color: white;\n"
+"    border-radius: 10px;\n"
+"}"
+"QListView {\n"
+"    background-color: rgb(41, 85, 180);\n"
+    "color: white;\n"
+"}"
+"QListView::item:selected {\n"
+"    background-color: #131936;\n"
+    "color: white;\n"
 "}")
         self.select_hall.setObjectName("select_hall")
         self.button_sessions_layout.addWidget(self.select_hall)
@@ -168,7 +178,8 @@ class Ui_MainWindow(object):
         self.create_client_button.setFont(font)
         self.create_client_button.setStyleSheet("#create_client_button{\n"
 "    background-color: rgb(92, 17, 255);\n"
-"color: white;\n"
+"    color: white;\n"
+"    border-radius: 10px;\n"
 "}")
         self.create_client_button.setObjectName("create_client_button")
         self.button_client_layout.addWidget(self.create_client_button)
@@ -221,7 +232,8 @@ class Ui_MainWindow(object):
         self.create_equipment_button.setFont(font)
         self.create_equipment_button.setStyleSheet("#create_equipment_button{\n"
 "    background-color: rgb(92, 17, 255);\n"
-"color: white;\n"
+"    color: white;\n"
+"    border-radius: 10px;\n"
 "}")
         self.create_equipment_button.setObjectName("create_equipment_button")
         self.button_equipment_layout.addWidget(self.create_equipment_button)

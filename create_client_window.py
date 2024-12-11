@@ -73,6 +73,7 @@ class Ui_MainWindow(object):
         self.save_client_button.setFont(font)
         self.save_client_button.setStyleSheet("#save_client_button{\n"
 "    background-color: rgb(24, 148, 2);\n"
+"    border-radius: 10px;\n"
 "}")
         self.save_client_button.setObjectName("save_client_button")
         self.gridLayout.addWidget(self.save_client_button, 0, 1, 1, 1)
@@ -93,6 +94,7 @@ class Ui_MainWindow(object):
         self.del_client_button.setFont(font)
         self.del_client_button.setStyleSheet("#del_client_button{\n"
 "    background-color: rgba(255, 0, 0, 0.9);\n"
+"    border-radius: 10px;\n"
 "}")
         self.del_client_button.setObjectName("del_client_button")
         self.gridLayout.addWidget(self.del_client_button, 1, 1, 1, 1)

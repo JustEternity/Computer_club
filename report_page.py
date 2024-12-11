@@ -30,7 +30,8 @@ class Ui_MainWindow(object):
         self.create_report_button.setFont(font)
         self.create_report_button.setStyleSheet("#create_report_button{\n"
 "    background-color: rgb(92, 17, 255);\n"
-"color: white;\n"
+"    border-radius: 10px;\n"
+"    color: white;\n"
 "}")
         self.create_report_button.setObjectName("create_report_button")
         self.gridLayout.addWidget(self.create_report_button, 2, 0, 1, 1)
