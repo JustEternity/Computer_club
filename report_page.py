@@ -35,7 +35,7 @@ class Ui_MainWindow(object):
 "}")
         self.create_report_button.setObjectName("create_report_button")
         self.gridLayout.addWidget(self.create_report_button, 2, 0, 1, 1)
-        self.report_name = QtWidgets.QLabel(parent=self.centralwidget)
+        self.report_name = QtWidgets.QLineEdit(parent=self.centralwidget)
         self.report_name.setStyleSheet("#report_name{\n"
 "color: white;\n"
 "}")
