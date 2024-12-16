@@ -49,11 +49,27 @@ class Ui_MainWindow(object):
         font.setFamily("Bahnschrift SemiLight SemiConde")
         font.setPointSize(12)
         self.condition_tab.setFont(font)
-        self.condition_tab.setStyleSheet("#condition_tab{\n"
-" background-color: transparent;\n"
-"border: 1px solid white;\n"
-"color: white;\n"
-"}")
+        self.condition_tab.setStyleSheet("""
+QTableWidget {
+    background-color: transparent;
+    gridline-color: #dcdcdc;
+    font-size: 14px;
+    font-family: Bahnschrift SemiLight SemiConde;
+}
+
+QTableWidget::item {
+    background-color: transparent;
+    color: white;
+    padding: 5px;
+    border: 1px solid #dcdcdc;
+    text-align: center;
+}
+
+QTableWidget::item:selected {
+    background-color: #a0c4ff;
+    color: #ffffff;
+}
+""")
         self.condition_tab.setColumnCount(2)
         self.condition_tab.setObjectName("condition_tab")
         self.condition_tab.setRowCount(0)
@@ -67,8 +83,9 @@ class Ui_MainWindow(object):
         self.condition_tab.horizontalHeader().setDefaultSectionSize(100)
         self.condition_tab.verticalHeader().setVisible(False)
         self.condition_tab.verticalHeader().setDefaultSectionSize(32)
-        self.condition_tab.setColumnWidth(0, 215)
-        self.condition_tab.setColumnWidth(1, 104)
+        self.condition_tab.setColumnWidth(0, 217)
+        self.condition_tab.setColumnWidth(1, 103)
+        self.condition_tab.setHorizontalScrollBarPolicy(QtCore.Qt.ScrollBarPolicy.ScrollBarAlwaysOff)
         self.gridLayout.addWidget(self.condition_tab, 1, 0, 1, 2)
         self.add_condition_button = QtWidgets.QPushButton(parent=self.centralwidget)
         self.add_condition_button.setMinimumSize(QtCore.QSize(320, 35))

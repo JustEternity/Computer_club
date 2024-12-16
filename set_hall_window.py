@@ -63,8 +63,6 @@ class Ui_MainWindow(object):
 "    border: 1px solid gray;\n"
 "color: white;\n"
 "}")
-        self.hallname_edit.setInputMask("")
-        self.hallname_edit.setText("")
         self.hallname_edit.setMaxLength(30)
         self.hallname_edit.setAlignment(QtCore.Qt.AlignmentFlag.AlignCenter)
         self.hallname_edit.setObjectName("hallname_edit")

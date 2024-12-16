@@ -38,6 +38,14 @@ class Ui_MainWindow(object):
 "    background-color: transparent;\n"
 "    border: 1px solid gray;\n"
 " color: white;\n"
+"}"
+"QListView {\n"
+"    background-color: rgb(41, 85, 180);\n"
+    "color: white;\n"
+"}"
+"QListView::item:selected {\n"
+"    background-color: #131936;\n"
+    "color: white;\n"
 "}")
         self.set_hall_equip.setObjectName("set_hall_equip")
         self.gridLayout.addWidget(self.set_hall_equip, 2, 0, 1, 1)
@@ -47,6 +55,14 @@ class Ui_MainWindow(object):
 "    background-color: transparent;\n"
 "    border: 1px solid gray;\n"
 " color: white;\n"
+"}"
+"QListView {\n"
+"    background-color: rgb(41, 85, 180);\n"
+    "color: white;\n"
+"}"
+"QListView::item:selected {\n"
+"    background-color: #131936;\n"
+    "color: white;\n"
 "}")
         self.set_equip_place.setObjectName("set_equip_place")
         self.gridLayout.addWidget(self.set_equip_place, 3, 0, 1, 1)

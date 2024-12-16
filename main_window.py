@@ -126,7 +126,7 @@ class Ui_MainWindow(object):
         self.loyal_system_button.setFont(font)
         self.loyal_system_button.setStyleSheet("#loyal_system_button{\n"
 "    background-color: rgb(92, 17, 255);\n"
-"color: white;\n"
+"    color: white;\n"
 "}")
         self.loyal_system_button.setObjectName("loyal_system_button")
         self.button_sessions_layout.addWidget(self.loyal_system_button)
@@ -153,6 +153,19 @@ class Ui_MainWindow(object):
 "    background-color: transparent;\n"
 "    border: 1px solid gray;\n"
 "    color: white;\n"
+"    font-family: 'Bahnschrift SemiLight SemiConde';\n"
+"    font-size: 16px;\n"
+"}\n"
+"QListWidget::item {\n"
+"    border-radius: 9px;\n"
+"    background-color: qlineargradient(x1: 0, y1: 0, x2: 0, y2: 1, stop: 0 #2b5876, stop: 1 #4e4376);\n"
+"    min-height: 40px;\n"
+"    margin: 3px;\n"
+"}\n"
+"QListWidget::item:selected {\n"
+"    background-color: rgb(92, 17, 255)}\n"
+"QListWidget::item:hover {\n"
+"    background-color: rgb(41, 85, 180);\n"
 "}")
         self.list_of_sessions.setObjectName("list_of_sessions")
         self.gridLayout_2.addWidget(self.list_of_sessions, 1, 0, 1, 1)
@@ -211,6 +224,19 @@ class Ui_MainWindow(object):
 "    background-color: transparent;\n"
 "    border: 1px solid gray;\n"
 "    color: white;\n"
+"    font-family: 'Bahnschrift SemiLight SemiConde';\n"
+"    font-size: 16px;\n"
+"}\n"
+"QListWidget::item {\n"
+"    border-radius: 9px;\n"
+"    background-color: qlineargradient(x1: 0, y1: 0, x2: 0, y2: 1, stop: 0 #2b5876, stop: 1 #4e4376);\n"
+"    min-height: 40px;\n"
+"    margin: 3px;\n"
+"}\n"
+"QListWidget::item:selected {\n"
+"    background-color: rgb(92, 17, 255)}\n"
+"QListWidget::item:hover {\n"
+"    background-color: rgb(41, 85, 180);\n"
 "}")
         self.list_of_clients.setObjectName("list_of_clients")
         self.gridLayout_3.addWidget(self.list_of_clients, 1, 0, 1, 1)
@@ -264,7 +290,20 @@ class Ui_MainWindow(object):
         self.list_of_equipment.setStyleSheet("#list_of_equipment{\n"
 "    background-color: transparent;\n"
 "    border: 1px solid gray;\n"
+"    font-family: 'Bahnschrift SemiLight SemiConde';\n"
+"    font-size: 16px;\n"
 "    color: white;\n"
+"}"
+"QListWidget::item {\n"
+"    border-radius: 9px;\n"
+"    background-color: qlineargradient(x1: 0, y1: 0, x2: 0, y2: 1, stop: 0 #2b5876, stop: 1 #4e4376);\n"
+"    min-height: 40px;\n"
+"    margin: 3px;\n"
+"}"
+"QListWidget::item:selected {\n"
+"    background-color: rgb(92, 17, 255)}\n"
+"QListWidget::item:hover {\n"
+"    background-color: rgb(41, 85, 180);\n"
 "}")
         self.list_of_equipment.setObjectName("list_of_equipment")
         self.gridLayout_4.addWidget(self.list_of_equipment, 1, 0, 1, 1)
@@ -280,13 +319,18 @@ class Ui_MainWindow(object):
         self.list_of_reports.setStyleSheet("#list_of_reports{\n"
 "    background-color: transparent;\n"
 "    border: 1px solid gray;\n"
-"    color: white;}\n"
+"    color: white;\n"
+"    font-family: 'Bahnschrift SemiLight SemiConde';\n"
+"    font-size: 16px;\n"
+"}\n"
 "QListWidget::item {\n"
 "    border-radius: 9px;\n"
 "    background-color: qlineargradient(x1: 0, y1: 0, x2: 0, y2: 1, stop: 0 #2b5876, stop: 1 #4e4376);\n"
 "    min-height: 40px;\n"
 "    margin: 3px;\n"
-"}"
+"}\n"
+"QListWidget::item:selected {\n"
+"    background-color: rgb(92, 17, 255)}\n"
 "QListWidget::item:hover {\n"
 "    background-color: rgb(41, 85, 180);\n"
 "}")
