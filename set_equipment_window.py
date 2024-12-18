@@ -83,9 +83,9 @@ class Ui_MainWindow(object):
         self.set_price_equip.setStyleSheet("#set_price_equip{\n"
 "    background-color: transparent;\n"
 "    border: 1px solid gray;\n"
-" color: white;\n"
+"    color: white;\n"
 "}")
-        self.set_price_equip.setInputMask("")
+        self.set_price_equip.setInputMask("9999999.99")
         self.set_price_equip.setObjectName("set_price_equip")
         self.gridLayout.addWidget(self.set_price_equip, 4, 0, 1, 1)
         self.del_equip_button = QtWidgets.QPushButton(parent=self.centralwidget)
@@ -105,7 +105,7 @@ class Ui_MainWindow(object):
         self.set_category_equip.setStyleSheet("#set_category_equip{\n"
 "    background-color: transparent;\n"
 "    border: 1px solid gray;\n"
-" color: white;\n"
+"    color: white;\n"
 "}"
 "QListView {\n"
 "    background-color: rgb(41, 85, 180);\n"

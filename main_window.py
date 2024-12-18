@@ -13,7 +13,7 @@ class Ui_MainWindow(object):
     def setupUi(self, MainWindow):
         MainWindow.setObjectName("MainWindow")
         MainWindow.resize(820, 680)
-        MainWindow.setMinimumSize(QtCore.QSize(820, 680))
+        MainWindow.setMinimumSize(QtCore.QSize(1220, 680))
         MainWindow.setMaximumSize(QtCore.QSize(16777215, 16777215))
         MainWindow.setStyleSheet("#MainWindow{\n"
 "border: none;\n"
@@ -144,6 +144,7 @@ class Ui_MainWindow(object):
 "    border: 1px solid gray;\n"
 "    color: white;\n"
 "}")
+        self.find_game_session.setMaxLength(20)
         self.find_game_session.setPlaceholderText("Введите номер места или телефон")
         self.find_game_session.setObjectName("find_game_session")
         self.button_sessions_layout.addWidget(self.find_game_session)
@@ -153,7 +154,7 @@ class Ui_MainWindow(object):
 "    background-color: transparent;\n"
 "    border: 1px solid gray;\n"
 "    color: white;\n"
-"    font-family: 'Bahnschrift SemiLight SemiConde';\n"
+"    font-family: 'Courier New';\n"
 "    font-size: 16px;\n"
 "}\n"
 "QListWidget::item {\n"
@@ -206,6 +207,7 @@ class Ui_MainWindow(object):
         self.find_client.setSizePolicy(sizePolicy)
         self.find_client.setMinimumSize(QtCore.QSize(245, 35))
         self.find_client.setMaximumSize(QtCore.QSize(300, 16777215))
+        self.find_client.setMaxLength(20)
         font = QtGui.QFont()
         font.setFamily("Bahnschrift SemiLight SemiConde")
         font.setPointSize(12)
@@ -224,7 +226,7 @@ class Ui_MainWindow(object):
 "    background-color: transparent;\n"
 "    border: 1px solid gray;\n"
 "    color: white;\n"
-"    font-family: 'Bahnschrift SemiLight SemiConde';\n"
+"    font-family: 'Courier New';\n"
 "    font-size: 16px;\n"
 "}\n"
 "QListWidget::item {\n"
@@ -269,6 +271,7 @@ class Ui_MainWindow(object):
         sizePolicy = QtWidgets.QSizePolicy(QtWidgets.QSizePolicy.Policy.Expanding, QtWidgets.QSizePolicy.Policy.Fixed)
         sizePolicy.setHorizontalStretch(0)
         sizePolicy.setVerticalStretch(0)
+        self.find_equipment.setMaxLength(20)
         sizePolicy.setHeightForWidth(self.find_equipment.sizePolicy().hasHeightForWidth())
         self.find_equipment.setSizePolicy(sizePolicy)
         self.find_equipment.setMinimumSize(QtCore.QSize(245, 35))
@@ -290,7 +293,7 @@ class Ui_MainWindow(object):
         self.list_of_equipment.setStyleSheet("#list_of_equipment{\n"
 "    background-color: transparent;\n"
 "    border: 1px solid gray;\n"
-"    font-family: 'Bahnschrift SemiLight SemiConde';\n"
+"    font-family: 'Courier New';\n"
 "    font-size: 16px;\n"
 "    color: white;\n"
 "}"
@@ -320,7 +323,7 @@ class Ui_MainWindow(object):
 "    background-color: transparent;\n"
 "    border: 1px solid gray;\n"
 "    color: white;\n"
-"    font-family: 'Bahnschrift SemiLight SemiConde';\n"
+"    font-family: 'Courier New';\n"
 "    font-size: 16px;\n"
 "}\n"
 "QListWidget::item {\n"

@@ -74,7 +74,7 @@ class Ui_MainWindow(object):
 "    border: 1px solid gray;\n"
 "    color: white;\n"
 "}")
-        self.edit_login.setMaxLength(100)
+        self.edit_login.setMaxLength(20)
         self.edit_login.setAlignment(QtCore.Qt.AlignmentFlag.AlignCenter)
         self.edit_login.setObjectName("edit_login")
         self.gridLayout.addWidget(self.edit_login, 1, 0, 1, 1)
@@ -90,7 +90,7 @@ class Ui_MainWindow(object):
 "    border: 1px solid gray;\n"
 "    color: white;\n"
 "}")
-        self.edit_password.setMaxLength(30)
+        self.edit_password.setMaxLength(16)
         self.edit_password.setEchoMode(QtWidgets.QLineEdit.EchoMode.Password)
         self.edit_password.setAlignment(QtCore.Qt.AlignmentFlag.AlignCenter)
         self.edit_password.setObjectName("edit_password")

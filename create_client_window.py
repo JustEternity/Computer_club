@@ -31,7 +31,7 @@ class Ui_MainWindow(object):
 "    border: 1px solid gray; \n"
 "    color: white;\n"
 "}")
-        self.name_edit.setMaxLength(30)
+        self.name_edit.setMaxLength(20)
         self.name_edit.setObjectName("name_edit")
         self.gridLayout_2.addWidget(self.name_edit, 0, 0, 1, 1)
         self.surname_edit = QtWidgets.QLineEdit(parent=self.centralwidget)
@@ -41,7 +41,7 @@ class Ui_MainWindow(object):
 "    border: 1px solid gray;\n"
 " color: white;\n"
 "}")
-        self.surname_edit.setMaxLength(30)
+        self.surname_edit.setMaxLength(20)
         self.surname_edit.setObjectName("surname_edit")
         self.gridLayout_2.addWidget(self.surname_edit, 1, 0, 1, 1)
         self.secondname_edit = QtWidgets.QLineEdit(parent=self.centralwidget)
@@ -51,7 +51,7 @@ class Ui_MainWindow(object):
 "    border: 1px solid gray;\n"
 " color: white;\n"
 "}")
-        self.secondname_edit.setMaxLength(30)
+        self.secondname_edit.setMaxLength(20)
         self.secondname_edit.setObjectName("secondname_edit")
         self.gridLayout_2.addWidget(self.secondname_edit, 2, 0, 1, 1)
         self.gridLayout = QtWidgets.QGridLayout()
@@ -82,7 +82,7 @@ class Ui_MainWindow(object):
         self.datebirth_edit.setStyleSheet("#datebirth_edit{\n"
 "    background-color: transparent;\n"
 "    border: 1px solid gray;\n"
-" color: white;\n"
+"    color: white;\n"
 "}")
         self.datebirth_edit.setObjectName("datebirth_edit")
         self.gridLayout.addWidget(self.datebirth_edit, 1, 0, 1, 1)

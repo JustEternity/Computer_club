@@ -9,6 +9,11 @@
 from PyQt6 import QtCore, QtGui, QtWidgets
 
 
+from PyQt6.QtWidgets import QApplication, QTableWidget, QTableWidgetItem, QVBoxLayout, QWidget, QStyledItemDelegate, QLineEdit
+from PyQt6.QtGui import QIntValidator
+from PyQt6.QtCore import Qt
+
+
 class Ui_MainWindow(object):
     def setupUi(self, MainWindow):
         MainWindow.setObjectName("MainWindow")

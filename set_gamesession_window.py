@@ -83,6 +83,7 @@ class Ui_MainWindow(object):
         self.gridLayout = QtWidgets.QGridLayout()
         self.gridLayout.setObjectName("gridLayout")
         self.time_session_edit = QtWidgets.QTimeEdit(parent=self.centralwidget)
+        self.time_session_edit.setMaximumTime(QtCore.QTime(18, 0, 0))
         self.time_session_edit.setMinimumSize(QtCore.QSize(100, 30))
         self.time_session_edit.setMaximumSize(QtCore.QSize(100, 30))
         font = QtGui.QFont()

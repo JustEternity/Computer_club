@@ -69,20 +69,27 @@ class Comp_club_main(QMainWindow, main_window.Ui_MainWindow):
         for row in self.gamesession_list:
             for i in self.equipment_list:
                 if i['id'] == row['equipment'] and i['hall'] == self.cur_hall:
-                    item = QListWidgetItem(str(row['id']) + ' ' + str(row['client']) + ' ' +
-                                        str(row['equipment']) + ' ' + row['starttime'].strftime("%Y-%m-%d %H:%M") + ' ' +
-                                        str(row['duration']) + ' ' + str(row['price']))
+                    price = str(row['price']) + ' руб.'
+                    item = QListWidgetItem(('ID сеанса: ' + str(row['id'])).center(15) + ' ' +
+                                           ('ID клиента: ' + str(row['client'])).center(15) + ' ' +
+                                           ('ID устройства: ' + str(row['equipment'])).center(20) + ' ' +
+                                           ('Начало: ' + row['starttime'].strftime("%d.%m %H:%M")).center(22) + ' ' +
+                                           ('Длительность: ' + str(row['duration'])).center(25) + ' ' + price.center(15))
                     item.setTextAlignment(Qt.AlignmentFlag.AlignCenter)
                     self.list_of_sessions.addItem(item)
                     self.id_gamesessions[self.list_of_sessions.count() - 1] = row['id']
                     self.busy_client.append(row['client'])
                     self.busy_equip.append(row['equipment'])
-        print(self.gamesession_list)
 
     def add_clients(self):
         self.list_of_clients.clear()
         for row in self.client_list:
-            item = QListWidgetItem(row['name'] + ' '*7 + row['surname'] + ' '*7 + row['birthdate'] + ' '*7 + row['telephone'])
+            if row['secondname'] == 'None':
+                sec = ' '
+            else:
+                sec = row['secondname']
+            item = QListWidgetItem(('ID: ' + str(row['id'])).center(8) + row['name'].center(25) + ' ' + row['surname'].center(25) + ' ' + sec.center(25) + ' '
+                                   + row['birthdate'].center(15) + ' ' + row['telephone'].center(15))
             item.setTextAlignment(Qt.AlignmentFlag.AlignCenter)
             self.list_of_clients.addItem(item)
             self.id_client[self.list_of_clients.count() - 1] = row['id']
@@ -93,9 +100,10 @@ class Comp_club_main(QMainWindow, main_window.Ui_MainWindow):
             for i in self.hall_list:
                 if row['hall'] == i['id']:
                     hall = i['name']
-            item = QListWidgetItem(str(row['id']) + ' '*7 + row['category'] + ' '*7 +
-                                   str(hall) + ' '*7 + 'место ' +
-                                   str(row['place']) + ' '*7 + str(row['price'])+ 'руб./час')
+            place = 'место ' + str(row['place'])
+            price = str(row['price'])+ 'руб./час'
+            item = QListWidgetItem(('ID:' + str(row['id'])).center(6) + ' ' + row['category'].center(25) + ' ' +
+                                   str(hall).center(25) + ' ' + place.center(15) + ' ' + price.center(25))
             item.setTextAlignment(Qt.AlignmentFlag.AlignCenter)
             self.list_of_equipment.addItem(item)
             self.id_equip[self.list_of_equipment.count() - 1] = row['id']
@@ -107,7 +115,6 @@ class Comp_club_main(QMainWindow, main_window.Ui_MainWindow):
         self.equipment_list = db.fetch_all(dbrequests.get_equipment())
         self.hall_list = db.fetch_all(dbrequests.get_hall())
         self.report_list = db.fetch_all(dbrequests.get_reports())
-        self.loyalsystem_list = db.fetch_all(dbrequests.get_loyalsystem())
 
         self.add_clients()
         self.add_equipments()
@@ -195,7 +202,6 @@ class Comp_club_main(QMainWindow, main_window.Ui_MainWindow):
             self.select_hall.setCurrentIndex(-1)
         elif index != -1:
             self.cur_hall = self.id_hall[index]
-            print(self.cur_hall)
             self.add_gamesessions()
 
     def check_resize(self, event):
@@ -227,7 +233,7 @@ class Comp_club_main(QMainWindow, main_window.Ui_MainWindow):
 
     def open_loyal_system_settings(self):
         self.setEnabled(False)
-        self.window = Loyal_system(settings=self.loyalsystem_list, parent=self)
+        self.window = Loyal_system(parent=self)
         self.window.show()
 
     def open_client_settings(self):
@@ -393,38 +399,60 @@ class Login(QMainWindow, login_window.Ui_MainWindow):
 
 
 class Loyal_system(QMainWindow, loyal_system_settings.Ui_MainWindow):
-    def __init__(self, settings, parent=None) -> None:
+    def __init__(self, parent=None) -> None:
         super().__init__(parent)
         self.setupUi(self)
 
         self.add_condition_button.clicked.connect(self.add_new_condition)
-        self.settings = settings
-        self.write_in_table(self.settings)
+        self.settings = db.fetch_all(dbrequests.get_loyalsystem())
+        self.write_in_table()
         self.condition_tab.itemChanged.connect(self.update_table)
 
     def update_table(self, item):
-        self.condition_tab.blockSignals(True)
-        if item.column() == 0:
-            self.settings[item.row()]['hourquantity'] = item.text()
-        else:
-            self.settings[item.row()]['discount'] = item.text()
-        self.write_in_table(self.settings)
-        self.condition_tab.blockSignals(False)
+        try:
+            if len(item.text()) > 5:
+                self.show_warning('Слишком большое число')
+                return None
+            self.condition_tab.blockSignals(True)
+            if  item.text() == '':
+                if item.column() == 0:
+                    self.settings[item.row()]['hourquantity'] = ''
+                else:
+                    self.settings[item.row()]['discount'] = ''
+            else:
+                if item.column() == 0:
+                    self.settings[item.row()]['hourquantity'] = int(item.text())
+                else:
+                    self.settings[item.row()]['discount'] = int(item.text())
+            self.write_in_table()
+            self.condition_tab.blockSignals(False)
+        except Exception as e:
+            self.show_warning('Условием может быть только целое число')
 
-    def write_in_table(self, arr):
-        self.condition_tab.setRowCount(len(arr))
-        for row, i in enumerate(arr):
-            item_name = QTableWidgetItem(str(i['hourquantity']))
-            item_name.setTextAlignment(Qt.AlignmentFlag.AlignCenter)
-            self.condition_tab.setItem(row, 0, item_name)
-            item_name = QTableWidgetItem(str(i['discount']) if 'discount' in i.keys() else '')
-            item_name.setTextAlignment(Qt.AlignmentFlag.AlignCenter)
-            self.condition_tab.setItem(row, 1, item_name)
+    def show_warning(self, message):
+        msg = QMessageBox()
+        msg.setIcon(QMessageBox.Icon.Warning)
+        msg.setText(message)
+        msg.setWindowTitle("Предупреждение")
+        msg.setStandardButtons(QMessageBox.StandardButton.Ok)
+        msg.exec()
+
+    def write_in_table(self):
+        self.settings = [k for k in self.settings if k]
+        self.condition_tab.setRowCount(len(self.settings))
+        for row, i in enumerate(self.settings):
+            if 'hourquantity' in i.keys() and 'discount' in i.keys():
+                item = QTableWidgetItem(str(i['hourquantity']))
+                item.setTextAlignment(Qt.AlignmentFlag.AlignCenter)
+                self.condition_tab.setItem(row, 0, item)
+                item = QTableWidgetItem(f"{i['discount']}%" if 'discount' in i.keys() else '')
+                item.setTextAlignment(Qt.AlignmentFlag.AlignCenter)
+                self.condition_tab.setItem(row, 1, item)
 
     def add_new_condition(self):
         row = self.condition_tab.rowCount()
         self.condition_tab.insertRow(row)
-        self.settings.append({})
+        self.settings.append({'hourquantity': '', 'discount': ''})
         self.condition_tab.setCurrentCell(row, 0)
         self.condition_tab.setFocus()
 
@@ -432,7 +460,9 @@ class Loyal_system(QMainWindow, loyal_system_settings.Ui_MainWindow):
         if self.parent():
             db.execute_query('TRUNCATE TABLE loyalsystem;')
             for i in self.settings:
-                db.execute_query(dbrequests.add_loyal_settings(i['hourquantity'], i['discount']))
+                if 'hourquantity' in i.keys() and 'discount' in i.keys():
+                    if i['hourquantity'] != '' and i['discount'] != '':
+                        db.execute_query(dbrequests.add_loyal_settings(i['hourquantity'], i['discount']))
             self.parent().setEnabled(True)
         super().closeEvent(event)
 
@@ -550,6 +580,8 @@ class Equipment(QMainWindow, set_equipment_window.Ui_MainWindow):
         self.category = self.set_category_equip.itemText(index)
 
     def change_description(self):
+        if len(self.equip_description.toPlainText()) > 300:
+            self.equip_description.textCursor().deletePreviousChar()
         self.description = self.equip_description.toPlainText()
 
     def change_hall(self, index):
@@ -585,7 +617,7 @@ class Gamesessions(QMainWindow, set_gamesession_window.Ui_MainWindow):
         self.client_list = self.parent().client_list
         self.id_equip = self.parent().id_equip
         self.id_client = self.parent().id_client
-        self.loyal_list = self.parent().loyalsystem_list
+        self.loyal_list = db.fetch_all(dbrequests.get_loyalsystem())
         self.busy_clients = self.parent().busy_client
         self.busy_equip = self.parent().busy_equip
         self.current_hall = hall
