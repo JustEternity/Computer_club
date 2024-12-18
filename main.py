@@ -1,5 +1,6 @@
 import sys
 import datetime
+import asyncio
 
 import main_window
 import create_client_window
@@ -12,13 +13,14 @@ import set_hall_window
 
 from decimal import Decimal
 
+
 import dbrequests
 
 from config import dbkey, dbpassword
 from dbase import Database
 
 from PyQt6.QtWidgets import QApplication, QMainWindow, QMessageBox, QTableWidgetItem, QFileDialog, QListWidgetItem
-from PyQt6.QtCore import QEvent, Qt, QDate, QTime
+from PyQt6.QtCore import QEvent, Qt, QDate, QTime, QTimer
 from PyQt6.QtGui import QFont, QPalette, QColor
 
 
@@ -34,8 +36,12 @@ class Comp_club_main(QMainWindow, main_window.Ui_MainWindow):
         self.id_gamesessions = {}
         self.id_reports = {}
         self.cur_hall = None
+        self.checked = None
         self.busy_client = []
         self.busy_equip = []
+        self.session_filter = self.find_game_session.text()
+        self.client_filter = self.find_client.text()
+        self.equip_filter = self.find_equipment.text()
 
         self.create_session_button.clicked.connect(self.open_gamesession_settings)
         self.loyal_system_button.clicked.connect(self.open_loyal_system_settings)
@@ -45,7 +51,10 @@ class Comp_club_main(QMainWindow, main_window.Ui_MainWindow):
         self.list_of_reports.itemDoubleClicked.connect(self.check_report)
         self.list_of_equipment.itemDoubleClicked.connect(self.update_equipment_info)
         self.list_of_sessions.itemDoubleClicked.connect(self.update_sessions_info)
-
+        self.find_game_session.textChanged.connect(self.change_session_filter)
+        self.find_client.textChanged.connect(self.change_client_filter)
+        self.find_equipment.textChanged.connect(self.change_equipment_filter)
+        self.list_of_clients.itemClicked.connect(self.choose_client)
 
         self.tabWidget.resizeEvent = self.check_resize
 
@@ -64,22 +73,70 @@ class Comp_club_main(QMainWindow, main_window.Ui_MainWindow):
         self.line_edit.setPalette(palette)
         self.line_edit.installEventFilter(self)
 
+        self.timer = QTimer(self)
+        self.timer.timeout.connect(self.check_sessions)
+        self.timer.start(60000)
+
+    def choose_client(self, item):
+        index = self.list_of_clients.row(item)
+        self.choose_client = self.id_client[index]
+
+    def check_sessions(self):
+        current_time = datetime.datetime.now()
+        query = dbrequests.get_gamesession()
+        sessions = db.fetch_all(query)
+        for session in sessions:
+            start_time = session['starttime']
+            if isinstance(start_time, str):
+                start_time = datetime.datetime.strptime(start_time, '%Y-%m-%d %H:%M:%S')
+
+            duration = session['duration']
+            if isinstance(duration, str):
+                h, m, s = map(int, duration.split(':'))
+                duration = datetime.timedelta(hours=h, minutes=m, seconds=s)
+
+            end_time = start_time + duration
+            if current_time >= end_time:
+                self.open_edit_form(session['id'], session['client'], session['equipment'],
+                            session['starttime'], session['duration'], session['price'])
+
+    def open_edit_form(self, session_id, session_client, session_equipment,
+                    session_starttime, session_duration, session_price):
+        window = Gamesessions(id=session_id,
+                                    client=session_client,
+                                    equipment=session_equipment,
+                                    starttime=session_starttime,
+                                    duration=session_duration,
+                                    price=session_price,
+                                    update=True, hall=self.cur_hall, parent=self)
+        window.show()
+
     def add_gamesessions(self):
+        self.busy_client.clear()
+        self.busy_equip.clear()
+        for j in self.gamesession_list:
+            for i in self.equipment_list:
+                if i['id'] == j['equipment'] and i['hall'] == self.cur_hall:
+                    self.busy_client.append(j['client'])
+                    self.busy_equip.append(j['equipment'])
         self.list_of_sessions.clear()
         for row in self.gamesession_list:
             for i in self.equipment_list:
-                if i['id'] == row['equipment'] and i['hall'] == self.cur_hall:
+                if i['id'] == row['equipment'] and i['hall'] == self.cur_hall and (str(self.session_filter) in str(row['equipment']) or str(self.session_filter) in str(row['client'])):
                     price = str(row['price']) + ' руб.'
+                    total_seconds = int(row['duration'].total_seconds())
+                    hours, remainder = divmod(total_seconds, 3600)
+                    minutes, _ = divmod(remainder, 60)
                     item = QListWidgetItem(('ID сеанса: ' + str(row['id'])).center(15) + ' ' +
                                            ('ID клиента: ' + str(row['client'])).center(15) + ' ' +
                                            ('ID устройства: ' + str(row['equipment'])).center(20) + ' ' +
                                            ('Начало: ' + row['starttime'].strftime("%d.%m %H:%M")).center(22) + ' ' +
-                                           ('Длительность: ' + str(row['duration'])).center(25) + ' ' + price.center(15))
+                                           ('Длительность: ' + f"{hours:02}:{minutes:02}").center(25) + ' ' + price.center(15))
                     item.setTextAlignment(Qt.AlignmentFlag.AlignCenter)
                     self.list_of_sessions.addItem(item)
                     self.id_gamesessions[self.list_of_sessions.count() - 1] = row['id']
-                    self.busy_client.append(row['client'])
-                    self.busy_equip.append(row['equipment'])
+                    self.busy_client.append(row['client']) if row['client'] not in self.busy_client else None
+                    self.busy_equip.append(row['equipment']) if row['equipment'] not in self.busy_equip else None
 
     def add_clients(self):
         self.list_of_clients.clear()
@@ -88,11 +145,12 @@ class Comp_club_main(QMainWindow, main_window.Ui_MainWindow):
                 sec = ' '
             else:
                 sec = row['secondname']
-            item = QListWidgetItem(('ID: ' + str(row['id'])).center(8) + row['name'].center(25) + ' ' + row['surname'].center(25) + ' ' + sec.center(25) + ' '
-                                   + row['birthdate'].center(15) + ' ' + row['telephone'].center(15))
-            item.setTextAlignment(Qt.AlignmentFlag.AlignCenter)
-            self.list_of_clients.addItem(item)
-            self.id_client[self.list_of_clients.count() - 1] = row['id']
+            if self.client_filter in row['surname'] or self.client_filter in row['telephone']:
+                item = QListWidgetItem(('ID: ' + str(row['id'])).center(8) + row['name'].center(25) + ' ' + row['surname'].center(25) + ' ' + sec.center(25) + ' '
+                                    + row['birthdate'].center(15) + ' ' + row['telephone'].center(15))
+                item.setTextAlignment(Qt.AlignmentFlag.AlignCenter)
+                self.list_of_clients.addItem(item)
+                self.id_client[self.list_of_clients.count() - 1] = row['id']
 
     def add_equipments(self):
         self.list_of_equipment.clear()
@@ -100,13 +158,18 @@ class Comp_club_main(QMainWindow, main_window.Ui_MainWindow):
             for i in self.hall_list:
                 if row['hall'] == i['id']:
                     hall = i['name']
-            place = 'место ' + str(row['place'])
-            price = str(row['price'])+ 'руб./час'
-            item = QListWidgetItem(('ID:' + str(row['id'])).center(6) + ' ' + row['category'].center(25) + ' ' +
-                                   str(hall).center(25) + ' ' + place.center(15) + ' ' + price.center(25))
-            item.setTextAlignment(Qt.AlignmentFlag.AlignCenter)
-            self.list_of_equipment.addItem(item)
-            self.id_equip[self.list_of_equipment.count() - 1] = row['id']
+            if row['id'] in self.busy_equip:
+                access = 'Занят'
+            else:
+                access = 'Доступен'
+            if self.equip_filter in str(row['id']) or self.equip_filter in hall or self.equip_filter in access:
+                place = 'место ' + str(row['place'])
+                price = str(row['price']) + ' руб./час'
+                item = QListWidgetItem(('ID:' + str(row['id'])).center(6) + ' ' + row['category'].center(25) + ' ' +
+                                    str(hall).center(25) + ' ' + place.center(15) + ' ' + price.center(25) + ' ' + access.center(12))
+                item.setTextAlignment(Qt.AlignmentFlag.AlignCenter)
+                self.list_of_equipment.addItem(item)
+                self.id_equip[self.list_of_equipment.count() - 1] = row['id']
 
     def get_info(self):
         self.gamesession_list = db.fetch_all(dbrequests.get_gamesession())
@@ -193,6 +256,7 @@ class Comp_club_main(QMainWindow, main_window.Ui_MainWindow):
         if event.type() == QEvent.Type.MouseButtonDblClick and source == self.line_edit:
             if self.line_edit.text() != '':
                 self.open_holl_creating(self.line_edit.text())
+                self.cur_hall = None
             return True
         return super().eventFilter(source, event)
 
@@ -200,6 +264,7 @@ class Comp_club_main(QMainWindow, main_window.Ui_MainWindow):
         if self.select_hall.currentText() == '+':
             self.open_holl_creating(None)
             self.select_hall.setCurrentIndex(-1)
+            self.cur_hall = None
         elif index != -1:
             self.cur_hall = self.id_hall[index]
             self.add_gamesessions()
@@ -224,12 +289,25 @@ class Comp_club_main(QMainWindow, main_window.Ui_MainWindow):
         """
         self.tabWidget.setStyleSheet(style)
 
+    def change_session_filter(self, text):
+        self.session_filter = text
+        self.add_gamesessions()
+
+    def change_client_filter(self, text):
+        self.client_filter = text
+        self.add_clients()
+
+    def change_equipment_filter(self, text):
+        self.equip_filter = text
+        self.add_equipments()
+
     def open_gamesession_settings(self):
         if self.cur_hall == None:
             return None
         self.setEnabled(False)
         self.window = Gamesessions(hall=self.cur_hall, parent=self)
         self.window.show()
+        self.cur_hall = None
 
     def open_loyal_system_settings(self):
         self.setEnabled(False)
@@ -269,6 +347,7 @@ class Clients(QMainWindow, create_client_window.Ui_MainWindow):
         self.secname = self.secondname_edit.text()
         self.tel = self.tel_edit.text()
         self.dbirth = self.datebirth_edit.date()
+        self.client_list = self.parent().client_list
 
         if name and surname and secname and tel and dbirth:
             self.surname_edit.setText(surname)
@@ -297,6 +376,10 @@ class Clients(QMainWindow, create_client_window.Ui_MainWindow):
 
 
     def save_client(self):
+        for i in self.client_list:
+            if i['telephone'] == self.tel:
+                self.show_warning("Клиент с таким номером телефона уже зарегистрирован!")
+                return None
         if self.surname!='' and self.name!='' and self.tel!='' and self.dbirth!='':
             if self.secname == '':
                 self.secname = None
@@ -613,8 +696,8 @@ class Gamesessions(QMainWindow, set_gamesession_window.Ui_MainWindow):
         self.setupUi(self)
         self.is_update = update
         self.id = id
-        self.equip_list = self.parent().equipment_list
-        self.client_list = self.parent().client_list
+        self.equip_list = db.fetch_all(dbrequests.get_equipment())
+        self.client_list = db.fetch_all(dbrequests.get_client())
         self.id_equip = self.parent().id_equip
         self.id_client = self.parent().id_client
         self.loyal_list = db.fetch_all(dbrequests.get_loyalsystem())
@@ -644,7 +727,7 @@ class Gamesessions(QMainWindow, set_gamesession_window.Ui_MainWindow):
 
         self.client = client
         self.equip = equipment
-        self.time_session = duration
+        self.time_session = self.time_session_edit.time().toString('HH:mm')
         self.price = price
         self.description = self.equipment_info.toPlainText()
 
@@ -654,6 +737,9 @@ class Gamesessions(QMainWindow, set_gamesession_window.Ui_MainWindow):
 
         self.save_session_button.clicked.connect(self.save_gamesession)
         self.stop_session_button.clicked.connect(self.stop_gamesession)
+
+        if not self.is_update:
+            self.stop_session_button.setText('Отмена')
 
     def fill_client_equip_selection(self):
         if not self.is_update:
@@ -679,28 +765,30 @@ class Gamesessions(QMainWindow, set_gamesession_window.Ui_MainWindow):
         if self.starttime == None:
             self.starttime = datetime.datetime.now()
             self.starttime = self.starttime.strftime("%Y-%m-%d %H:%M")
-
-        if self.id and self.client and self.equip and self.starttime and self.time_session and self.price and Decimal(self.price) > 0:
+        if self.client and self.equip and self.starttime and self.time_session and self.price and Decimal(self.price) > 0:
             if self.is_update:
                 query = dbrequests.update_gamesession(self.id, self.client, self.equip, self.starttime, self.time_session, self.price)
                 db.execute_query(query)
                 self.close()
             else:
-                self.busy_clients.append(self.client)
-                self.busy_equip.append(self.equip)
                 query = dbrequests.add_gamesession(self.client, self.equip, self.starttime, self.time_session, self.price)
                 db.execute_query(query)
+                self.busy_clients.append(self.client)
+                self.busy_equip.append(self.equip)
                 self.close()
         else:
             self.show_warning("Присутствуют незаполненные поля!")
 
     def stop_gamesession(self):
-        if self.id and self.client and self.equip and self.starttime and self.time_session and self.price:
-            query = dbrequests.del_gamesession(self.id)
-            db.execute_query(query)
+        if self.stop_session_button.text() == 'Отмена':
             self.close()
         else:
-            self.show_warning("Присутствуют незаполненные поля!")
+            if self.id and self.client and self.equip and self.starttime and self.time_session and self.price:
+                query = dbrequests.stop_gamesession(self.id)
+                db.execute_query(query)
+                self.close()
+            else:
+                self.show_warning("Присутствуют незаполненные поля!")
 
     def change_client(self, index):
         self.client = self.set_client.itemText(index)
@@ -839,7 +927,7 @@ def main():
     users = db.fetch_all(dbrequests.get_admin())
     users = db.decrypt_data(users)
     app = QApplication(sys.argv)
-    window = Login(users)
+    window = Login(admins=users)
     window.show()
     app.exec()
     db.close()

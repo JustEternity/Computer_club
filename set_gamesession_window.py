@@ -71,6 +71,7 @@ class Ui_MainWindow(object):
         self.equipment_info = QtWidgets.QTextBrowser(parent=self.centralwidget)
         font = QtGui.QFont()
         font.setFamily("Bahnschrift SemiLight SemiConde")
+        self.equipment_info.setPlaceholderText('После выбора устройства здесь будет находиться его описание')
         font.setPointSize(12)
         self.equipment_info.setFont(font)
         self.equipment_info.setStyleSheet("#equipment_info{\n"
@@ -84,6 +85,7 @@ class Ui_MainWindow(object):
         self.gridLayout.setObjectName("gridLayout")
         self.time_session_edit = QtWidgets.QTimeEdit(parent=self.centralwidget)
         self.time_session_edit.setMaximumTime(QtCore.QTime(18, 0, 0))
+        self.time_session_edit.setMinimumTime(QtCore.QTime(1, 0, 0))
         self.time_session_edit.setMinimumSize(QtCore.QSize(100, 30))
         self.time_session_edit.setMaximumSize(QtCore.QSize(100, 30))
         font = QtGui.QFont()
@@ -114,6 +116,7 @@ class Ui_MainWindow(object):
         self.price_session = QtWidgets.QLineEdit(parent=self.centralwidget)
         self.price_session.setMinimumSize(QtCore.QSize(100, 30))
         self.price_session.setMaximumSize(QtCore.QSize(100, 30))
+        self.price_session.setPlaceholderText('Стоимость')
         font = QtGui.QFont()
         font.setFamily("Bahnschrift SemiLight SemiConde")
         font.setPointSize(14)

@@ -145,7 +145,8 @@ class Ui_MainWindow(object):
 "    color: white;\n"
 "}")
         self.find_game_session.setMaxLength(20)
-        self.find_game_session.setPlaceholderText("Введите номер места или телефон")
+        self.find_game_session.setPlaceholderText("Введите номер места или ID клиента")
+        self.find_game_session.setInputMask('99999')
         self.find_game_session.setObjectName("find_game_session")
         self.button_sessions_layout.addWidget(self.find_game_session)
         self.gridLayout_2.addLayout(self.button_sessions_layout, 0, 0, 1, 1)
@@ -285,7 +286,7 @@ class Ui_MainWindow(object):
 "    border: 1px solid gray;\n"
 "    color: white;\n"
 "}")
-        self.find_equipment.setPlaceholderText("Введите код устройства")
+        self.find_equipment.setPlaceholderText("Введите код устройства, зал или статус")
         self.find_equipment.setObjectName("find_equipment")
         self.button_equipment_layout.addWidget(self.find_equipment)
         self.gridLayout_4.addLayout(self.button_equipment_layout, 0, 0, 1, 1)
