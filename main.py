@@ -595,12 +595,12 @@ class Reports(QMainWindow, report_page.Ui_MainWindow):
         file_path, _ = file_dialog.getSaveFileName(caption="Сохранить файл как", filter="PDF files (*.pdf)")
 
         if file_path:
-            pdfmetrics.registerFont(TTFont('DejaVuSans', 'djsans/DejaVuSans.ttf'))
+            pdfmetrics.registerFont(TTFont('FreeFont', 'GNU Free Font/FreeSans.ttf'))
 
             c = canvas.Canvas(file_path, pagesize=letter)
             width, height = letter
 
-            c.setFont("DejaVuSans", 12)
+            c.setFont("FreeFont", 12)
             c.drawString(100, height - 40, "Отчет по работе компьютерного клуба за месяц")
             c.drawString(100, height - 80, f"Количество уникальных пользователей: {arr['Количество уникальных пользователей']}")
             c.drawString(100, height - 100, f"Количество игровых сессий: {arr['Количество игровых сессий']}")
@@ -612,10 +612,10 @@ class Reports(QMainWindow, report_page.Ui_MainWindow):
         file_path, _ = file_dialog.getSaveFileName(caption="Сохранить файл как", filter="PDF files (*.pdf)")
 
         if file_path:
-            pdfmetrics.registerFont(TTFont('DejaVuSans', 'djsans/DejaVuSans.ttf'))
+            pdfmetrics.registerFont(TTFont('FreeFont', 'GNU Free Font/FreeSans.ttf'))
             c = canvas.Canvas(file_path, pagesize=letter)
             width, height = letter
-            c.setFont("DejaVuSans", 12)
+            c.setFont("FreeFont", 12)
             c.drawString(100, height - 40, "Отчет по популярности оборудования")
             y_position = height - 80
             for result in arr:
@@ -636,12 +636,12 @@ class Reports(QMainWindow, report_page.Ui_MainWindow):
         file_path, _ = file_dialog.getSaveFileName(caption="Сохранить файл как", filter="PDF files (*.pdf)")
 
         if file_path:
-            pdfmetrics.registerFont(TTFont('DejaVuSans', 'djsans/DejaVuSans.ttf'))
+            pdfmetrics.registerFont(TTFont('FreeFont', 'GNU Free Font/FreeSans.ttf'))
 
             c = canvas.Canvas(file_path, pagesize=letter)
             width, height = letter
 
-            c.setFont("DejaVuSans", 12)
+            c.setFont("FreeFont", 12)
             c.drawString(100, height - 40, "Отчет по среднему времени аренды оборудования")
 
             y_position = height - 80
@@ -667,12 +667,12 @@ class Reports(QMainWindow, report_page.Ui_MainWindow):
         file_path, _ = file_dialog.getSaveFileName(caption="Сохранить файл как", filter="PDF files (*.pdf)")
 
         if file_path:
-            pdfmetrics.registerFont(TTFont('DejaVuSans', 'djsans/DejaVuSans.ttf'))
+            pdfmetrics.registerFont(TTFont('FreeFont', 'GNU Free Font/FreeSans.ttf'))
 
             c = canvas.Canvas(file_path, pagesize=letter)
             width, height = letter
 
-            c.setFont("DejaVuSans", 12)
+            c.setFont("FreeFont", 12)
             c.drawString(100, height - 40, f"Отчет по игровым сессиям клиента {self.choose_client}")
 
             y_position = height - 80
@@ -700,12 +700,12 @@ class Reports(QMainWindow, report_page.Ui_MainWindow):
         file_path, _ = file_dialog.getSaveFileName(caption="Сохранить файл как", filter="PDF files (*.pdf)")
 
         if file_path:
-            pdfmetrics.registerFont(TTFont('DejaVuSans', 'djsans/DejaVuSans.ttf'))
+            pdfmetrics.registerFont(TTFont('FreeFont', 'GNU Free Font/FreeSans.ttf'))
 
             c = canvas.Canvas(file_path, pagesize=letter)
             width, height = letter
 
-            c.setFont("DejaVuSans", 12)
+            c.setFont("FreeFont", 12)
             c.drawString(100, height - 40, "Отчет по заполненности залов")
 
             y_position = height - 80
