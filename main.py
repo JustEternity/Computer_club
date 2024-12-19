@@ -1,6 +1,5 @@
 import sys
 import datetime
-import asyncio
 
 import main_window
 import create_client_window
@@ -12,7 +11,10 @@ import set_gamesession_window
 import set_hall_window
 
 from decimal import Decimal
-
+from reportlab.lib.pagesizes import letter
+from reportlab.pdfgen import canvas
+from reportlab.pdfbase.ttfonts import TTFont
+from reportlab.pdfbase import pdfmetrics
 
 import dbrequests
 
@@ -79,7 +81,7 @@ class Comp_club_main(QMainWindow, main_window.Ui_MainWindow):
 
     def choose_client(self, item):
         index = self.list_of_clients.row(item)
-        self.choose_client = self.id_client[index]
+        self.checked = self.id_client[index]
 
     def check_sessions(self):
         current_time = datetime.datetime.now()
@@ -96,7 +98,7 @@ class Comp_club_main(QMainWindow, main_window.Ui_MainWindow):
                 duration = datetime.timedelta(hours=h, minutes=m, seconds=s)
 
             end_time = start_time + duration
-            if current_time >= end_time:
+            if current_time >= end_time and session['completed'] == '0':
                 self.open_edit_form(session['id'], session['client'], session['equipment'],
                             session['starttime'], session['duration'], session['price'])
 
@@ -116,13 +118,13 @@ class Comp_club_main(QMainWindow, main_window.Ui_MainWindow):
         self.busy_equip.clear()
         for j in self.gamesession_list:
             for i in self.equipment_list:
-                if i['id'] == j['equipment'] and i['hall'] == self.cur_hall:
-                    self.busy_client.append(j['client'])
-                    self.busy_equip.append(j['equipment'])
+                if i['id'] == j['equipment'] and j['completed'] == 0:
+                    self.busy_client.append(j['client']) if j['client'] not in self.busy_client else None
+                    self.busy_equip.append(j['equipment']) if  j['equipment'] not in self.busy_equip else None
         self.list_of_sessions.clear()
         for row in self.gamesession_list:
             for i in self.equipment_list:
-                if i['id'] == row['equipment'] and i['hall'] == self.cur_hall and (str(self.session_filter) in str(row['equipment']) or str(self.session_filter) in str(row['client'])):
+                if row['completed'] == 0 and i['id'] == row['equipment'] and i['hall'] == self.cur_hall and (str(self.session_filter) in str(row['equipment']) or str(self.session_filter) in str(row['client'])):
                     price = str(row['price']) + ' руб.'
                     total_seconds = int(row['duration'].total_seconds())
                     hours, remainder = divmod(total_seconds, 3600)
@@ -179,11 +181,11 @@ class Comp_club_main(QMainWindow, main_window.Ui_MainWindow):
         self.hall_list = db.fetch_all(dbrequests.get_hall())
         self.report_list = db.fetch_all(dbrequests.get_reports())
 
-        self.add_clients()
-        self.add_equipments()
         self.add_halls()
         self.add_reports()
+        self.add_clients()
         self.add_gamesessions()
+        self.add_equipments()
 
     def add_reports(self):
         self.list_of_reports.clear()
@@ -206,7 +208,7 @@ class Comp_club_main(QMainWindow, main_window.Ui_MainWindow):
         for i in self.report_list:
             if i['id'] == self.id_reports[self.list_of_reports.row(item)]:
                 self.setEnabled(False)
-                self.window = Reports(id=i['id'], name=i['name'], description=i['description'], parent=self)
+                self.window = Reports(id=i['id'], name=i['name'], description=i['description'], query=i['request'], report=self.id_reports[self.list_of_reports.row(item)], parent=self)
                 self.window.show()
 
     def update_client_info(self, item):
@@ -551,17 +553,179 @@ class Loyal_system(QMainWindow, loyal_system_settings.Ui_MainWindow):
 
 
 class Reports(QMainWindow, report_page.Ui_MainWindow):
-    def __init__(self, id=None, name=None, description=None, parent=None) -> None:
+    def __init__(self, id=None, name=None, description=None, query=None, report=None, parent=None) -> None:
         super().__init__(parent)
         self.setupUi(self)
 
         self.id = id
-        self.id_report = self.parent().id_reports
+        self.name = name
+        self.description = description
+        self.query = query
+        self.report = report
+        self.choose_client = self.parent().checked
         self.report_name.setText(name)
         self.report_description.setText(description)
         self.create_report_button.clicked.connect(self.save_report)
 
-    def save_report(self):
+
+    def save_report(self, item):
+        query = self.query
+        match self.report:
+            case 1:
+                res = db.execute_and_fetch(query)
+                self.attendance_to_pdf(arr=res)
+            case 2:
+                res = db.execute_and_fetch(query=query, many=True)
+                self.popularity_to_pdf(arr=res)
+            case 3:
+                res = db.execute_and_fetch(query=query, many=True)
+                self.av_time(arr=res)
+            case 4:
+                if self.choose_client != None and self.choose_client != -1:
+                    query = query.replace('{}', str(self.choose_client))
+                    res = db.execute_and_fetch(query=query, many=True)
+                    self.history_client(arr=res, client=self.choose_client)
+            case 5:
+                res = db.execute_and_fetch(query=query, many=True)
+                self.hall_fullness(arr=res)
+
+
+    def attendance_to_pdf(self, arr=None):
+        file_dialog = QFileDialog()
+        file_path, _ = file_dialog.getSaveFileName(caption="Сохранить файл как", filter="PDF files (*.pdf)")
+
+        if file_path:
+            pdfmetrics.registerFont(TTFont('DejaVuSans', 'djsans/DejaVuSans.ttf'))
+
+            c = canvas.Canvas(file_path, pagesize=letter)
+            width, height = letter
+
+            c.setFont("DejaVuSans", 12)
+            c.drawString(100, height - 40, "Отчет по работе компьютерного клуба за месяц")
+            c.drawString(100, height - 80, f"Количество уникальных пользователей: {arr['Количество уникальных пользователей']}")
+            c.drawString(100, height - 100, f"Количество игровых сессий: {arr['Количество игровых сессий']}")
+            c.save()
+        self.close()
+
+    def popularity_to_pdf(self, arr=None):
+        file_dialog = QFileDialog()
+        file_path, _ = file_dialog.getSaveFileName(caption="Сохранить файл как", filter="PDF files (*.pdf)")
+
+        if file_path:
+            pdfmetrics.registerFont(TTFont('DejaVuSans', 'djsans/DejaVuSans.ttf'))
+            c = canvas.Canvas(file_path, pagesize=letter)
+            width, height = letter
+            c.setFont("DejaVuSans", 12)
+            c.drawString(100, height - 40, "Отчет по популярности оборудования")
+            y_position = height - 80
+            for result in arr:
+                c.drawString(100, y_position, f"Категория: {result['category']}")
+                c.drawString(100, y_position - 20, f"ID: {result['id']}")
+                c.drawString(100, y_position - 40, f"Общее время аренды: {result['total_rental_time']}")
+                c.drawString(100, y_position - 60, f"Количество сессий: {result['session_count']}")
+                y_position -= 100
+                if y_position < 100:
+                    c.showPage()
+                    c.setFont("DejaVuSans", 12)
+                    y_position = height - 40
+            c.save()
+        self.close()
+
+    def av_time(self, arr=None):
+        file_dialog = QFileDialog()
+        file_path, _ = file_dialog.getSaveFileName(caption="Сохранить файл как", filter="PDF files (*.pdf)")
+
+        if file_path:
+            pdfmetrics.registerFont(TTFont('DejaVuSans', 'djsans/DejaVuSans.ttf'))
+
+            c = canvas.Canvas(file_path, pagesize=letter)
+            width, height = letter
+
+            c.setFont("DejaVuSans", 12)
+            c.drawString(100, height - 40, "Отчет по среднему времени аренды оборудования")
+
+            y_position = height - 80
+            for result in arr:
+                if isinstance(result, dict):
+                    c.drawString(100, y_position, f"Код устройства: {result.get('Код устройства', 'N/A')}")
+                    c.drawString(100, y_position - 20, f"Общее время аренды: {int(result.get('Общее время аренды', 'N/A'))} минут")
+                    c.drawString(100, y_position - 40, f"Количество проведенных сессий: {result.get('Количество проведенных сессий', 'N/A')}")
+                    y_position -= 100
+
+                    if y_position < 100:
+                        c.showPage()
+                        c.setFont("DejaVuSans", 12)
+                        y_position = height - 40
+                else:
+                    print("Неверный формат данных: ожидается словарь")
+
+            c.save()
+        self.close()
+
+    def history_client(self, client=None, arr=None):
+        file_dialog = QFileDialog()
+        file_path, _ = file_dialog.getSaveFileName(caption="Сохранить файл как", filter="PDF files (*.pdf)")
+
+        if file_path:
+            pdfmetrics.registerFont(TTFont('DejaVuSans', 'djsans/DejaVuSans.ttf'))
+
+            c = canvas.Canvas(file_path, pagesize=letter)
+            width, height = letter
+
+            c.setFont("DejaVuSans", 12)
+            c.drawString(100, height - 40, f"Отчет по игровым сессиям клиента {self.choose_client}")
+
+            y_position = height - 80
+            for result in arr:
+                if isinstance(result, dict):
+                    c.drawString(100, y_position, f"id сеанса: {result.get('id сеанса', 'N/A')}")
+                    c.drawString(100, y_position - 20, f"id оборудования: {result.get('id оборудования', 'N/A')}")
+                    c.drawString(100, y_position - 40, f"Время начала сеанса: {result.get('Время начала сеанса', 'N/A')}")
+                    c.drawString(100, y_position - 60, f"Время аренды: {result.get('Время аренды', 'N/A')}")
+                    c.drawString(100, y_position - 80, f"Цена: {result.get('Цена', 'N/A')}")
+                    y_position -= 140
+
+                    if y_position < 100:
+                        c.showPage()
+                        c.setFont("DejaVuSans", 12)
+                        y_position = height - 40
+                else:
+                    print("Неверный формат данных: ожидается словарь")
+
+            c.save()
+        self.close()
+
+    def hall_fullness(self, arr=None):
+        file_dialog = QFileDialog()
+        file_path, _ = file_dialog.getSaveFileName(caption="Сохранить файл как", filter="PDF files (*.pdf)")
+
+        if file_path:
+            pdfmetrics.registerFont(TTFont('DejaVuSans', 'djsans/DejaVuSans.ttf'))
+
+            c = canvas.Canvas(file_path, pagesize=letter)
+            width, height = letter
+
+            c.setFont("DejaVuSans", 12)
+            c.drawString(100, height - 40, "Отчет по заполненности залов")
+
+            y_position = height - 80
+            for result in arr:
+                if isinstance(result, dict):
+                    c.drawString(100, y_position, f"Зал: {result.get('Зал', 'N/A')}")
+                    c.drawString(100, y_position - 20, f"Количество мест: {result.get('Количество мест', 'N/A')}")
+                    c.drawString(100, y_position - 40, f"Место: {result.get('Место', 'N/A')}")
+                    c.drawString(100, y_position - 60, f"id устройства: {result.get('id устройства', 'N/A')}")
+                    c.drawString(100, y_position - 80, f"Категория: {result.get('Категория', 'N/A')}")
+                    y_position -= 120
+
+                    if y_position < 100:
+                        c.showPage()
+                        c.setFont("DejaVuSans", 12)
+                        y_position = height - 40
+                else:
+                    print("Неверный формат данных: ожидается словарь")
+
+            c.save()
         self.close()
 
     def closeEvent(self, event):
@@ -823,8 +987,8 @@ class Gamesessions(QMainWindow, set_gamesession_window.Ui_MainWindow):
             hours, remainder = divmod(res.total_seconds(), 3600)
             minutes, _ = divmod(remainder, 60)
             formatted_duration = f"{int(hours):02d}:{int(minutes):02d}"
-            qtime = QTime.fromString(formatted_duration, "HH:mm")
-            sum_time = datetime.datetime.strptime(qtime, '%H:%M').time()
+            # qtime = QTime.fromString(formatted_duration, "HH:mm")
+            sum_time = datetime.datetime.strptime(formatted_duration, '%H:%M').time()
         sum_hour = sum_time.hour
         disc = 0
         for k in self.loyal_list:

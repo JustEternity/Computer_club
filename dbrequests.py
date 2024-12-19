@@ -8,7 +8,7 @@ def get_equipment():
     return "SELECT id, category, description, hall, price, place FROM equipment"
 
 def get_gamesession():
-    return "SELECT id, client, equipment, starttime, duration, price FROM gamesessions;"
+    return "SELECT id, client, equipment, starttime, duration, price, completed FROM gamesessions;"
 
 def get_hall():
     return "SELECT id, name, placecount FROM halls"
