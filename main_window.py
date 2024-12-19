@@ -145,7 +145,7 @@ class Ui_MainWindow(object):
 "    color: white;\n"
 "}")
         self.find_game_session.setMaxLength(20)
-        self.find_game_session.setPlaceholderText("Введите номер устройства или ID клиента")
+        self.find_game_session.setPlaceholderText("Введите код устройства или ID клиента")
         self.find_game_session.setInputMask('99999')
         self.find_game_session.setObjectName("find_game_session")
         self.button_sessions_layout.addWidget(self.find_game_session)

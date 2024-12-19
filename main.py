@@ -422,13 +422,13 @@ class Clients(QMainWindow, create_client_window.Ui_MainWindow):
         msg.exec()
 
     def change_surname(self, text):
-        self.surname = text
+        self.surname = text.lstrip().rstrip()
 
     def change_name(self, text):
-        self.name = text
+        self.name = text.lstrip().rstrip()
 
     def change_secname(self, text):
-        self.secname = text
+        self.secname = text.lstrip().rstrip()
 
     def change_telephone(self, text):
         self.tel = text
@@ -498,6 +498,10 @@ class Loyal_system(QMainWindow, loyal_system_settings.Ui_MainWindow):
             if len(item.text()) > 5:
                 self.show_warning('Слишком большое число')
                 return None
+            for i in self.settings:
+                if int(i['hourquantity']) == item.text() or str(i['discount']) == item.text():
+                    self.show_warning('Условия не могут повторяться!')
+                    return None
             self.condition_tab.blockSignals(True)
             if  item.text() == '':
                 if item.column() == 0:
@@ -1030,6 +1034,7 @@ class Halls(QMainWindow, set_hall_window.Ui_MainWindow):
         self.setupUi(self)
         self.id = id
         self.is_update = update
+        self.equip_list = self.parent().equipment_list
 
         self.name = self.hallname_edit.text()
         self.placecount = self.roominess_hall_edit.text()
@@ -1045,15 +1050,22 @@ class Halls(QMainWindow, set_hall_window.Ui_MainWindow):
         self.hall_del_button.clicked.connect(self.del_hall)
 
     def save_hall(self):
+        tmp = []
+        for i in self.equip_list:
+            if i['hall'] == self.id:
+                tmp.append(int(i['place']))
         if self.name and self.placecount:
             if not self.is_update:
                 query = dbrequests.add_hall(self.name, str(self.placecount))
                 db.execute_query(query)
                 self.close()
             else:
-                query = dbrequests.update_hall(self.id, self.name, str(self.placecount))
-                db.execute_query(query)
-                self.close()
+                if int(self.placecount) > max(tmp):
+                    query = dbrequests.update_hall(self.id, self.name, str(self.placecount))
+                    db.execute_query(query)
+                    self.close()
+                else:
+                    self.show_warning("У вас есть оборудование на позициях больше!")
         else:
             self.show_warning("Присутствуют незаполненные поля!")
 
@@ -1066,10 +1078,10 @@ class Halls(QMainWindow, set_hall_window.Ui_MainWindow):
             self.show_warning("Присутствуют незаполненные поля!")
 
     def change_hallname(self, text):
-        self.name = text
+        self.name = text.lstrip().rstrip()
 
     def change_placecount(self, text):
-        self.placecount = text
+        self.placecount = text.lstrip().rstrip()
 
     def show_warning(self, message):
         msg = QMessageBox()
