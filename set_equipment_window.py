@@ -117,7 +117,7 @@ class Ui_MainWindow(object):
     "color: white;\n"
 "}")
         self.set_category_equip.setObjectName("set_category_equip")
-        self.set_category_equip.addItems(['Компьютеры', 'Консоли', 'VR', 'Периферия', 'Другое'])
+        self.set_category_equip.addItems(['Компьютеры', 'Консоли', 'VR', 'Другое'])
         self.set_category_equip.setCurrentIndex(-1)
         self.gridLayout.addWidget(self.set_category_equip, 0, 0, 1, 2)
         MainWindow.setCentralWidget(self.centralwidget)

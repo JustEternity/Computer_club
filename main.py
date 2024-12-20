@@ -10,7 +10,7 @@ import set_equipment_window
 import set_gamesession_window
 import set_hall_window
 
-from decimal import Decimal
+from decimal import Decimal, ROUND_HALF_UP
 from reportlab.lib.pagesizes import letter
 from reportlab.pdfgen import canvas
 from reportlab.pdfbase.ttfonts import TTFont
@@ -44,6 +44,7 @@ class Comp_club_main(QMainWindow, main_window.Ui_MainWindow):
         self.session_filter = self.find_game_session.text()
         self.client_filter = self.find_client.text()
         self.equip_filter = self.find_equipment.text()
+        self.opened_form = False
 
         self.create_session_button.clicked.connect(self.open_gamesession_settings)
         self.loyal_system_button.clicked.connect(self.open_loyal_system_settings)
@@ -77,7 +78,7 @@ class Comp_club_main(QMainWindow, main_window.Ui_MainWindow):
 
         self.timer = QTimer(self)
         self.timer.timeout.connect(self.check_sessions)
-        self.timer.start(60000)
+        self.timer.start(10000)
 
     def choose_client(self, item):
         index = self.list_of_clients.row(item)
@@ -87,6 +88,7 @@ class Comp_club_main(QMainWindow, main_window.Ui_MainWindow):
         current_time = datetime.datetime.now()
         query = dbrequests.get_gamesession()
         sessions = db.fetch_all(query)
+
         for session in sessions:
             start_time = session['starttime']
             if isinstance(start_time, str):
@@ -98,20 +100,22 @@ class Comp_club_main(QMainWindow, main_window.Ui_MainWindow):
                 duration = datetime.timedelta(hours=h, minutes=m, seconds=s)
 
             end_time = start_time + duration
-            if current_time >= end_time and session['completed'] == '0':
+            if (current_time >= end_time) and session['completed'] == 0:
                 self.open_edit_form(session['id'], session['client'], session['equipment'],
-                            session['starttime'], session['duration'], session['price'])
+                                    session['starttime'], session['duration'], session['price'])
 
     def open_edit_form(self, session_id, session_client, session_equipment,
                     session_starttime, session_duration, session_price):
-        window = Gamesessions(id=session_id,
+        if not self.opened_form:
+            window = Gamesessions(id=session_id,
                                     client=session_client,
                                     equipment=session_equipment,
                                     starttime=session_starttime,
                                     duration=session_duration,
                                     price=session_price,
                                     update=True, hall=self.cur_hall, parent=self)
-        window.show()
+            window.show()
+            self.opened_form = True
 
     def add_gamesessions(self):
         self.busy_client.clear()
@@ -499,7 +503,7 @@ class Loyal_system(QMainWindow, loyal_system_settings.Ui_MainWindow):
                 self.show_warning('Слишком большое число')
                 return None
             for i in self.settings:
-                if int(i['hourquantity']) == item.text() or str(i['discount']) == item.text():
+                if (int(i['hourquantity']) == item.text() and item.column() == 0) or (str(i['discount']) == item.text() and item.column() == 1):
                     self.show_warning('Условия не могут повторяться!')
                     return None
             self.condition_tab.blockSignals(True)
@@ -810,7 +814,7 @@ class Equipment(QMainWindow, set_equipment_window.Ui_MainWindow):
         for i in self.hall_list:
             if i['name'] == self.hall:
                 self.hall = i['id']
-        if self.category and self.description and self.hall and self.place and self.price:
+        if self.category and self.description and self.hall and self.place and self.price != '.':
             if not self.is_update:
                 query = dbrequests.add_equipment(self.category, self.description, self.hall, self.price, self.place)
                 db.execute_query(query)
@@ -960,7 +964,9 @@ class Gamesessions(QMainWindow, set_gamesession_window.Ui_MainWindow):
 
     def change_client(self, index):
         self.client = self.set_client.itemText(index)
-        self.client = self.current_client[index]
+        self.id = self.current_client[index]
+        if self.time_session and self.equip:
+            self.calculate_price_session(self.time_session, self.equip, self.id)
 
     def change_equip(self, index):
         self.equip = self.set_equipment.itemText(index)
@@ -968,12 +974,12 @@ class Gamesessions(QMainWindow, set_gamesession_window.Ui_MainWindow):
                 if i['id'] == self.current_equip[index]:
                     self.equipment_info.setText(i['description'])
                     tmp = i['id']
-        if self.time_session:
+        if self.time_session  and self.client:
             self.calculate_price_session(self.time_session, tmp, self.id)
 
     def change_duration(self, time):
         self.time_session = time.toString('HH:mm')
-        if self.equip:
+        if self.equip and self.client:
             for i in self.equip_list:
                 if i['id'] == int(self.equip):
                     tmp = i['id']
@@ -985,6 +991,7 @@ class Gamesessions(QMainWindow, set_gamesession_window.Ui_MainWindow):
                 equip_price = i['price']
         query = dbrequests.get_client_hours(id)
         res = db.execute_and_fetch(query)['SEC_TO_TIME(SUM(TIME_TO_SEC(duration)))']
+        print(res)
         if res == None:
             sum_time = datetime.datetime.strptime('00:00', '%H:%M').time()
         else:
@@ -996,19 +1003,21 @@ class Gamesessions(QMainWindow, set_gamesession_window.Ui_MainWindow):
         sum_hour = sum_time.hour
         disc = 0
         for k in self.loyal_list:
-            if disc < k['hourquantity'] <= sum_hour:
+            if k['hourquantity'] <= sum_hour and k['discount'] > disc:
                 disc = k['discount']
         cur_time = datetime.datetime.strptime(time, '%H:%M').time()
         time_min = cur_time.minute
         if time_min >= 30:
             cur_time = Decimal(cur_time.hour+1)
-            discount = Decimal(1 - (disc / 10))
-            self.price_session.setText(str(equip_price* (cur_time) * (discount)))
+            discount = Decimal(1 - (disc / 100)).quantize(Decimal('0.01'), rounding=ROUND_HALF_UP)
+            print(self.id, cur_time, equip_price, discount)
+            self.price_session.setText(f"{equip_price *cur_time * discount:.2f}")
             self.price = self.price_session.text()
         else:
             cur_time = Decimal(cur_time.hour)
-            discount = Decimal(1 - (disc / 10))
-            self.price_session.setText(str(equip_price*(cur_time) * (discount)))
+            discount = Decimal(1 - (disc / 100)).quantize(Decimal('0.01'), rounding=ROUND_HALF_UP)
+            print(self.id, cur_time, equip_price, discount)
+            self.price_session.setText(f"{equip_price *cur_time * discount:.2f}")
             self.price = self.price_session.text()
 
     def show_warning(self, message):
@@ -1025,6 +1034,7 @@ class Gamesessions(QMainWindow, set_gamesession_window.Ui_MainWindow):
         if self.parent():
             self.parent().get_info()
             self.parent().setEnabled(True)
+            self.parent().opened_form = False
         super().closeEvent(event)
 
 
@@ -1071,9 +1081,16 @@ class Halls(QMainWindow, set_hall_window.Ui_MainWindow):
 
     def del_hall(self):
         if self.name and self.placecount:
-            query = dbrequests.del_hall(self.id)
-            db.execute_query(query)
-            self.close()
+            flag = True
+            for i in self.equip_list:
+                if i['hall'] == self.id:
+                    flag = False
+                    self.show_warning('Этот зал не пуст')
+                    break
+            if flag:
+                query = dbrequests.del_hall(self.id)
+                db.execute_query(query)
+                self.close()
         else:
             self.show_warning("Присутствуют незаполненные поля!")
 
@@ -1109,6 +1126,6 @@ def main():
     db.close()
 
 if __name__ == "__main__":
-    db = Database('localhost', 'root', dbpassword, 'computerclub', dbkey)
+    db = Database('150.241.90.210', 'justEt', dbpassword, 'justEtCursach', dbkey)
     main()
 

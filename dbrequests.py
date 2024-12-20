@@ -65,4 +65,4 @@ def update_gamesession(id, client, equipment, starttime, duration, price):
     return f"UPDATE gamesessions SET client = '{client}', equipment = '{equipment}', starttime = '{starttime}', duration = '{duration}', price = '{price}' WHERE id = '{id}';"
 
 def get_client_hours(id):
-    return f"SELECT SEC_TO_TIME(SUM(TIME_TO_SEC(duration))) FROM gamesessions WHERE id > '{id}';"
+    return f"SELECT SEC_TO_TIME(SUM(TIME_TO_SEC(duration))) FROM gamesessions WHERE client = '{id}';"
