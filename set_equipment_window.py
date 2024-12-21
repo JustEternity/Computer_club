@@ -86,7 +86,7 @@ class Ui_MainWindow(object):
 "    color: white;\n"
 "}")
         self.set_price_equip.setPlaceholderText('Цена аренды')
-        self.set_price_equip.setInputMask("9999999.99")
+        self.set_price_equip.setInputMask("999999.99")
         self.set_price_equip.setObjectName("set_price_equip")
         self.gridLayout.addWidget(self.set_price_equip, 4, 0, 1, 1)
         self.del_equip_button = QtWidgets.QPushButton(parent=self.centralwidget)

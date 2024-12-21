@@ -1,5 +1,6 @@
 import sys
 import datetime
+import pymysql
 
 import main_window
 import create_client_window
@@ -178,12 +179,15 @@ class Comp_club_main(QMainWindow, main_window.Ui_MainWindow):
                 self.id_equip[self.list_of_equipment.count() - 1] = row['id']
 
     def get_info(self):
-        self.gamesession_list = db.fetch_all(dbrequests.get_gamesession())
-        self.client_list = db.fetch_all(dbrequests.get_client())
-        self.client_list = db.decrypt_data(self.client_list)
-        self.equipment_list = db.fetch_all(dbrequests.get_equipment())
-        self.hall_list = db.fetch_all(dbrequests.get_hall())
-        self.report_list = db.fetch_all(dbrequests.get_reports())
+        try:
+            self.gamesession_list = db.fetch_all(dbrequests.get_gamesession())
+            self.client_list = db.fetch_all(dbrequests.get_client())
+            self.client_list = db.decrypt_data(self.client_list)
+            self.equipment_list = db.fetch_all(dbrequests.get_equipment())
+            self.hall_list = db.fetch_all(dbrequests.get_hall())
+            self.report_list = db.fetch_all(dbrequests.get_reports())
+        except (Exception, pymysql.Error) as e:
+            self.show_warning('Ошибка получения данных, проверьте подключение')
 
         self.add_halls()
         self.add_reports()
@@ -220,13 +224,13 @@ class Comp_club_main(QMainWindow, main_window.Ui_MainWindow):
             if i['id'] == self.id_client[self.list_of_clients.row(item)]:
                 self.setEnabled(False)
                 self.window = Clients(id=i['id'],
-                                      name=i['name'],
-                                      surname=i['surname'],
-                                      secname=i['secondname'],
-                                      tel=i['telephone'],
-                                      dbirth=i['birthdate'],
-                                      parent=self,
-                                      update=True)
+                                    name=i['name'],
+                                    surname=i['surname'],
+                                    secname=i['secondname'],
+                                    tel=i['telephone'],
+                                    dbirth=i['birthdate'],
+                                    parent=self,
+                                    update=True)
                 self.window.show()
 
     def update_equipment_info(self, item):
@@ -340,6 +344,14 @@ class Comp_club_main(QMainWindow, main_window.Ui_MainWindow):
             self.window = Halls(parent=self)
             self.window.show()
 
+    def show_warning(self, message):
+        msg = QMessageBox()
+        msg.setIcon(QMessageBox.Icon.Warning)
+        msg.setText(message)
+        msg.setWindowTitle("Предупреждение")
+        msg.setStandardButtons(QMessageBox.StandardButton.Ok)
+        msg.exec()
+
 
 class Clients(QMainWindow, create_client_window.Ui_MainWindow):
     def __init__(self, id=None, name=None, surname=None, secname=None, tel=None, dbirth=None, parent=None, update=False) -> None:
@@ -379,8 +391,6 @@ class Clients(QMainWindow, create_client_window.Ui_MainWindow):
         self.save_client_button.clicked.connect(self.save_client)
         self.del_client_button.clicked.connect(self.del_client)
 
-
-
     def save_client(self):
         for i in self.client_list:
             if i['telephone'] == self.tel:
@@ -389,31 +399,37 @@ class Clients(QMainWindow, create_client_window.Ui_MainWindow):
         if self.surname!='' and self.name!='' and self.tel!='' and self.dbirth!='':
             if self.secname == '':
                 self.secname = None
-            if not self.is_update:
-                query = dbrequests.add_client(db.encrypt(self.name),
-                                              db.encrypt(self.surname),
-                                              db.encrypt(self.secname),
-                                              db.encrypt(self.dbirth.toString("yyyy-MM-dd")),
-                                              db.encrypt(self.tel))
-                db.execute_query(query)
-                self.close()
-            elif self.is_update:
-                query = dbrequests.update_client(self.id,
-                                                 db.encrypt(self.surname),
-                                                 db.encrypt(self.name),
-                                                 db.encrypt(self.secname),
-                                                 db.encrypt(self.dbirth.toString("yyyy-MM-dd")),
-                                                 db.encrypt(self.tel))
-                db.execute_query(query)
-                self.close()
+            try:
+                if not self.is_update:
+                    query = dbrequests.add_client(db.encrypt(self.name),
+                                                db.encrypt(self.surname),
+                                                db.encrypt(self.secname),
+                                                db.encrypt(self.dbirth.toString("yyyy-MM-dd")),
+                                                db.encrypt(self.tel))
+                    db.execute_query(query)
+                    self.close()
+                elif self.is_update:
+                    query = dbrequests.update_client(self.id,
+                                                    db.encrypt(self.surname),
+                                                    db.encrypt(self.name),
+                                                    db.encrypt(self.secname),
+                                                    db.encrypt(self.dbirth.toString("yyyy-MM-dd")),
+                                                    db.encrypt(self.tel))
+                    db.execute_query(query)
+                    self.close()
+            except pymysql.Error:
+                    self.show_warning('Ошибка отправки данных на сервер')
         else:
             self.show_warning("Присутствуют незаполненные поля!")
 
     def del_client(self):
         if self.surname and self.name and self.tel and self.dbirth and self.id:
-            query = dbrequests.del_client(self.id)
-            db.execute_query(query)
-            self.close()
+            try:
+                query = dbrequests.del_client(self.id)
+                db.execute_query(query)
+                self.close()
+            except pymysql.Error:
+                    self.show_warning('Ошибка отправки данных на сервер')
         else:
             self.show_warning("Присутствуют незаполненные поля!")
 
@@ -578,24 +594,27 @@ class Reports(QMainWindow, report_page.Ui_MainWindow):
 
     def save_report(self, item):
         query = self.query
-        match self.report:
-            case 1:
-                res = db.execute_and_fetch(query)
-                self.attendance_to_pdf(arr=res)
-            case 2:
-                res = db.execute_and_fetch(query=query, many=True)
-                self.popularity_to_pdf(arr=res)
-            case 3:
-                res = db.execute_and_fetch(query=query, many=True)
-                self.av_time(arr=res)
-            case 4:
-                if self.choose_client != None and self.choose_client != -1:
-                    query = query.replace('{}', str(self.choose_client))
+        try:
+            match self.report:
+                case 1:
+                    res = db.execute_and_fetch(query)
+                    self.attendance_to_pdf(arr=res)
+                case 2:
                     res = db.execute_and_fetch(query=query, many=True)
-                    self.history_client(arr=res, client=self.choose_client)
-            case 5:
-                res = db.execute_and_fetch(query=query, many=True)
-                self.hall_fullness(arr=res)
+                    self.popularity_to_pdf(arr=res)
+                case 3:
+                    res = db.execute_and_fetch(query=query, many=True)
+                    self.av_time(arr=res)
+                case 4:
+                    if self.choose_client != None and self.choose_client != -1:
+                        query = query.replace('{}', str(self.choose_client))
+                        res = db.execute_and_fetch(query=query, many=True)
+                        self.history_client(arr=res, client=self.choose_client)
+                case 5:
+                    res = db.execute_and_fetch(query=query, many=True)
+                    self.hall_fullness(arr=res)
+        except pymysql.Error:
+                    self.show_warning('Ошибка отправки данных на сервер')
 
 
     def attendance_to_pdf(self, arr=None):
@@ -634,7 +653,7 @@ class Reports(QMainWindow, report_page.Ui_MainWindow):
                 y_position -= 100
                 if y_position < 100:
                     c.showPage()
-                    c.setFont("DejaVuSans", 12)
+                    c.setFont("FreeFont", 12)
                     y_position = height - 40
             c.save()
         self.close()
@@ -662,10 +681,10 @@ class Reports(QMainWindow, report_page.Ui_MainWindow):
 
                     if y_position < 100:
                         c.showPage()
-                        c.setFont("DejaVuSans", 12)
+                        c.setFont("FreeFont", 12)
                         y_position = height - 40
                 else:
-                    print("Неверный формат данных: ожидается словарь")
+                    print("Произошла ошибка при формировании отчета")
 
             c.save()
         self.close()
@@ -695,7 +714,7 @@ class Reports(QMainWindow, report_page.Ui_MainWindow):
 
                     if y_position < 100:
                         c.showPage()
-                        c.setFont("DejaVuSans", 12)
+                        c.setFont("FreeFont", 12)
                         y_position = height - 40
                 else:
                     print("Неверный формат данных: ожидается словарь")
@@ -717,21 +736,28 @@ class Reports(QMainWindow, report_page.Ui_MainWindow):
             c.drawString(100, height - 40, "Отчет по заполненности залов")
 
             y_position = height - 80
+            printed_halls = set()
+
             for result in arr:
                 if isinstance(result, dict):
-                    c.drawString(100, y_position, f"Зал: {result.get('Зал', 'N/A')}")
-                    c.drawString(100, y_position - 20, f"Количество мест: {result.get('Количество мест', 'N/A')}")
-                    c.drawString(100, y_position - 40, f"Место: {result.get('Место', 'N/A')}")
-                    c.drawString(100, y_position - 60, f"id устройства: {result.get('id устройства', 'N/A')}")
-                    c.drawString(100, y_position - 80, f"Категория: {result.get('Категория', 'N/A')}")
-                    y_position -= 120
+                    hall_name = result.get('Зал', 'N/A')
+                    if hall_name not in printed_halls:
+                        c.drawString(100, y_position - 20, f"Зал: {hall_name}")
+                        c.drawString(100, y_position - 40, f"Количество мест: {result.get('Количество мест', 'N/A')}")
+                        printed_halls.add(hall_name)
+                        y_position -= 80
+
+                    c.drawString(100, y_position, f"Место: {result.get('Место', 'N/A')}")
+                    c.drawString(100, y_position - 20, f"id устройства: {result.get('id устройства', 'N/A')}")
+                    c.drawString(100, y_position - 40, f"Категория: {result.get('Категория', 'N/A')}")
+                    y_position -= 60
 
                     if y_position < 100:
                         c.showPage()
-                        c.setFont("DejaVuSans", 12)
+                        c.setFont("FreeFont", 12)
                         y_position = height - 40
                 else:
-                    print("Неверный формат данных: ожидается словарь")
+                    print("Произошла ошибка при формировании отчета")
 
             c.save()
         self.close()
@@ -815,21 +841,27 @@ class Equipment(QMainWindow, set_equipment_window.Ui_MainWindow):
             if i['name'] == self.hall:
                 self.hall = i['id']
         if self.category and self.description and self.hall and self.place and self.price != '.':
-            if not self.is_update:
-                query = dbrequests.add_equipment(self.category, self.description, self.hall, self.price, self.place)
-                db.execute_query(query)
-                self.close()
-            else:
-                query = dbrequests.update_equip(self.id, self.category, self.description, self.hall, self.price, self.place)
-                db.execute_query(query)
-                self.close()
+            try:
+                if not self.is_update:
+                    query = dbrequests.add_equipment(self.category, self.description, self.hall, self.price, self.place)
+                    db.execute_query(query)
+                    self.close()
+                else:
+                    query = dbrequests.update_equip(self.id, self.category, self.description, self.hall, self.price, self.place)
+                    db.execute_query(query)
+                    self.close()
+            except pymysql.Error:
+                    self.show_warning('Ошибка отправки данных на сервер')
         else:
             self.show_warning("Присутствуют незаполненные поля!")
 
     def del_equip(self):
-        query = dbrequests.del_equipment(self.id)
-        db.execute_query(query)
-        self.close()
+        try:
+            query = dbrequests.del_equipment(self.id)
+            db.execute_query(query)
+            self.close()
+        except pymysql.Error:
+                    self.show_warning('Ошибка отправки данных на сервер')
 
     def change_category(self, index):
         self.category = self.set_category_equip.itemText(index)
@@ -938,16 +970,19 @@ class Gamesessions(QMainWindow, set_gamesession_window.Ui_MainWindow):
             self.starttime = datetime.datetime.now()
             self.starttime = self.starttime.strftime("%Y-%m-%d %H:%M")
         if self.client and self.equip and self.starttime and self.time_session and self.price and Decimal(self.price) > 0:
-            if self.is_update:
-                query = dbrequests.update_gamesession(self.id, self.client, self.equip, self.starttime, self.time_session, self.price)
-                db.execute_query(query)
-                self.close()
-            else:
-                query = dbrequests.add_gamesession(self.client, self.equip, self.starttime, self.time_session, self.price)
-                db.execute_query(query)
-                self.busy_clients.append(self.client)
-                self.busy_equip.append(self.equip)
-                self.close()
+            try:
+                if self.is_update:
+                    query = dbrequests.update_gamesession(self.id, self.client, self.equip, self.starttime, self.time_session, self.price)
+                    db.execute_query(query)
+                    self.close()
+                else:
+                    query = dbrequests.add_gamesession(self.client, self.equip, self.starttime, self.time_session, self.price)
+                    db.execute_query(query)
+                    self.busy_clients.append(self.client)
+                    self.busy_equip.append(self.equip)
+                    self.close()
+            except pymysql.Error:
+                    self.show_warning('Ошибка отправки данных на сервер')
         else:
             self.show_warning("Присутствуют незаполненные поля!")
 
@@ -955,12 +990,15 @@ class Gamesessions(QMainWindow, set_gamesession_window.Ui_MainWindow):
         if self.stop_session_button.text() == 'Отмена':
             self.close()
         else:
-            if self.id and self.client and self.equip and self.starttime and self.time_session and self.price:
-                query = dbrequests.stop_gamesession(self.id)
-                db.execute_query(query)
-                self.close()
-            else:
-                self.show_warning("Присутствуют незаполненные поля!")
+            try:
+                if self.id and self.client and self.equip and self.starttime and self.time_session and self.price:
+                    query = dbrequests.stop_gamesession(self.id)
+                    db.execute_query(query)
+                    self.close()
+                else:
+                    self.show_warning("Присутствуют незаполненные поля!")
+            except pymysql.Error:
+                    self.show_warning('Ошибка отправки данных на сервер')
 
     def change_client(self, index):
         self.client = self.set_client.itemText(index)
@@ -1065,17 +1103,20 @@ class Halls(QMainWindow, set_hall_window.Ui_MainWindow):
             if i['hall'] == self.id:
                 tmp.append(int(i['place']))
         if self.name and self.placecount:
-            if not self.is_update:
-                query = dbrequests.add_hall(self.name, str(self.placecount))
-                db.execute_query(query)
-                self.close()
-            else:
-                if int(self.placecount) > max(tmp):
-                    query = dbrequests.update_hall(self.id, self.name, str(self.placecount))
+            try:
+                if not self.is_update:
+                    query = dbrequests.add_hall(self.name, str(self.placecount))
                     db.execute_query(query)
                     self.close()
                 else:
-                    self.show_warning("У вас есть оборудование на позициях больше!")
+                    if int(self.placecount) > max(tmp):
+                        query = dbrequests.update_hall(self.id, self.name, str(self.placecount))
+                        db.execute_query(query)
+                        self.close()
+                    else:
+                        self.show_warning("У вас есть оборудование на позициях больше!")
+            except pymysql.Error:
+                    self.show_warning('Ошибка отправки данных на сервер')
         else:
             self.show_warning("Присутствуют незаполненные поля!")
 
@@ -1088,9 +1129,12 @@ class Halls(QMainWindow, set_hall_window.Ui_MainWindow):
                     self.show_warning('Этот зал не пуст')
                     break
             if flag:
-                query = dbrequests.del_hall(self.id)
-                db.execute_query(query)
-                self.close()
+                try:
+                    query = dbrequests.del_hall(self.id)
+                    db.execute_query(query)
+                    self.close()
+                except pymysql.Error:
+                    self.show_warning('Ошибка отправки данных на сервер')
         else:
             self.show_warning("Присутствуют незаполненные поля!")
 
@@ -1116,16 +1160,33 @@ class Halls(QMainWindow, set_hall_window.Ui_MainWindow):
         super().closeEvent(event)
 
 
+def show_warning(self, message):
+        msg = QMessageBox()
+        msg.setIcon(QMessageBox.Icon.Warning)
+        msg.setText(message)
+        msg.setWindowTitle("Предупреждение")
+        msg.setStandardButtons(QMessageBox.StandardButton.Ok)
+        msg.exec()
+
 def main():
-    users = db.fetch_all(dbrequests.get_admin())
-    users = db.decrypt_data(users)
-    app = QApplication(sys.argv)
-    window = Login(admins=users)
-    window.show()
-    app.exec()
-    db.close()
+    try:
+        users = db.fetch_all(dbrequests.get_admin())
+        users = db.decrypt_data(users)
+        app = QApplication(sys.argv)
+        window = Login(admins=users)
+        window.show()
+        app.exec()
+    except pymysql.Error:
+        show_warning('Ошибка получения данных')
+    except Exception:
+        show_warning('Ошибка!')
+    finally:
+        db.close()
 
 if __name__ == "__main__":
-    db = Database('150.241.90.210', 'justEt', dbpassword, 'justEtCursach', dbkey)
-    main()
+    try:
+        db = Database('150.241.90.210', 'justEt', dbpassword, 'justEtCursach', dbkey)
+        main()
+    except pymysql.Error:
+        show_warning('Ошибка подключения к базе данных')
 
