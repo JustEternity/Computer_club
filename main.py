@@ -392,10 +392,11 @@ class Clients(QMainWindow, create_client_window.Ui_MainWindow):
         self.del_client_button.clicked.connect(self.del_client)
 
     def save_client(self):
-        for i in self.client_list:
-            if i['telephone'] == self.tel:
-                self.show_warning("Клиент с таким номером телефона уже зарегистрирован!")
-                return None
+        if self.is_update == False:
+            for i in self.client_list:
+                if i['telephone'] == self.tel:
+                    self.show_warning("Клиент с таким номером телефона уже зарегистрирован!")
+                    return None
         if self.surname!='' and self.name!='' and self.tel!='' and self.dbirth!='':
             if self.secname == '':
                 self.secname = None
@@ -774,31 +775,30 @@ class Equipment(QMainWindow, set_equipment_window.Ui_MainWindow):
         self.setupUi(self)
         self.id = id
         self.is_update = update
+        self.place = place
         self.id_hall = {}
         self.hall_list = self.parent().hall_list
         self.equip_list = self.parent().equipment_list
 
         self.fill_hall_selection()
 
-        if id and self.is_update:
+        if self.id and self.is_update:
             self.hall = hall
             index = self.set_category_equip.findText(category)
             self.set_category_equip.setCurrentIndex(index)
             self.equip_description.setText(description)
-            for row in self.equip_list:
-                for i in self.hall_list:
-                    if row['hall'] == i['id']:
-                        halltmp = i['name']
+            for i in self.hall_list:
+                if self.hall == i['id']:
+                    halltmp = i['name']
             index = self.set_hall_equip.findText(halltmp)
             self.set_hall_equip.setCurrentIndex(index)
-            self.fill_place_selection(self.hall, True)
+            self.fill_place_selection(hall_id=self.hall, update=True)
             index = self.set_equip_place.findText(str(place))
             self.set_equip_place.setCurrentIndex(index)
             self.set_price_equip.setText(str(price))
 
         self.category = category
         self.hall = hall
-        self.place = place
         self.description = self.equip_description.toPlainText()
         self.price = self.set_price_equip.text()
 
@@ -818,9 +818,12 @@ class Equipment(QMainWindow, set_equipment_window.Ui_MainWindow):
         self.set_equip_place.clear()
         tmp = []
         if not update:
-            tmp = []
             for k in self.equip_list:
                 if k['hall'] == hall_id:
+                    tmp.append(int(k['place']))
+        else:
+            for k in self.equip_list:
+                if k['hall'] == hall_id and k['place'] != self.place:
                     tmp.append(int(k['place']))
         for i in self.hall_list:
             if i['id'] == hall_id:
@@ -1029,7 +1032,6 @@ class Gamesessions(QMainWindow, set_gamesession_window.Ui_MainWindow):
                 equip_price = i['price']
         query = dbrequests.get_client_hours(id)
         res = db.execute_and_fetch(query)['SEC_TO_TIME(SUM(TIME_TO_SEC(duration)))']
-        print(res)
         if res == None:
             sum_time = datetime.datetime.strptime('00:00', '%H:%M').time()
         else:
@@ -1048,13 +1050,11 @@ class Gamesessions(QMainWindow, set_gamesession_window.Ui_MainWindow):
         if time_min >= 30:
             cur_time = Decimal(cur_time.hour+1)
             discount = Decimal(1 - (disc / 100)).quantize(Decimal('0.01'), rounding=ROUND_HALF_UP)
-            print(self.id, cur_time, equip_price, discount)
             self.price_session.setText(f"{equip_price *cur_time * discount:.2f}")
             self.price = self.price_session.text()
         else:
             cur_time = Decimal(cur_time.hour)
             discount = Decimal(1 - (disc / 100)).quantize(Decimal('0.01'), rounding=ROUND_HALF_UP)
-            print(self.id, cur_time, equip_price, discount)
             self.price_session.setText(f"{equip_price *cur_time * discount:.2f}")
             self.price = self.price_session.text()
 
