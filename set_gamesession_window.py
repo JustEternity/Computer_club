@@ -156,8 +156,6 @@ class Ui_MainWindow(object):
         _translate = QtCore.QCoreApplication.translate
         MainWindow.setWindowTitle(_translate("MainWindow", "Игровой сеанс"))
         self.set_client.setPlaceholderText(_translate("MainWindow", "Выберите клиента"))
-        self.set_client.setItemText(0, _translate("MainWindow", "Что то"))
-        self.set_client.setItemText(1, _translate("MainWindow", "Еще"))
         self.set_equipment.setPlaceholderText(_translate("MainWindow", "Выберите устройство"))
         self.stop_session_button.setText(_translate("MainWindow", "Завершить сеанс"))
         self.save_session_button.setText(_translate("MainWindow", "Сохранить"))

@@ -520,11 +520,12 @@ class Loyal_system(QMainWindow, loyal_system_settings.Ui_MainWindow):
                 self.show_warning('Слишком большое число')
                 return None
             for i in self.settings:
-                if (int(i['hourquantity']) == item.text() and item.column() == 0) or (str(i['discount']) == item.text() and item.column() == 1):
-                    self.show_warning('Условия не могут повторяться!')
-                    return None
-            self.condition_tab.blockSignals(True)
-            if  item.text() == '':
+                if i['hourquantity'] != '' and i['discount'] != '':
+                    if (str(i['hourquantity']) == item.text() and item.column() == 0) or (str(i['discount']) == item.text() and item.column() == 1):
+                        self.show_warning('Условия не могут повторяться!')
+                        item.setText('')
+                        return None
+            if item.text() == '':
                 if item.column() == 0:
                     self.settings[item.row()]['hourquantity'] = ''
                 else:
@@ -534,10 +535,18 @@ class Loyal_system(QMainWindow, loyal_system_settings.Ui_MainWindow):
                     self.settings[item.row()]['hourquantity'] = int(item.text())
                 else:
                     self.settings[item.row()]['discount'] = int(item.text())
+                if item.column() == 1 and (int(item.text()) > 100 or int(item.text()) < 0):
+                    self.show_warning('Некорректный размер скидки')
+                    item.setText('')
+            self.condition_tab.blockSignals(True)
             self.write_in_table()
             self.condition_tab.blockSignals(False)
-        except Exception as e:
+        except ValueError:
             self.show_warning('Условием может быть только целое число')
+            item.setText('')
+        except Exception as e:
+            self.show_warning('Произошла ошибка')
+            item.setText('')
 
     def show_warning(self, message):
         msg = QMessageBox()
